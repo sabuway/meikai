@@ -1,16 +1,3 @@
-
-    <!-- 👇 ここからがヘッダー部分です -->
-    <header>
-        <h1>名鉄回送情報共有</h1>
-    </header>
-    <!-- 👆 ここまで -->
-
-    <main>
-        <p>ここに回送情報のコンテンツが入ります。</p>
-    </main>
-
-</body>
-</html>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -24,11 +11,10 @@
             padding: 0;
             font-family: sans-serif;
             background-color: #f5f5f5;
-            /* フッターに被らないよう下に余白を確保 */
-            padding-bottom: 70px;
+            padding-bottom: 90px; /* フッターが高くなった分、下の余白を広げました */
         }
 
-        /* ヘッダー（背景赤・文字白） */
+        /* ヘッダー */
         header {
             background-color: #d0021b;
             color: #ffffff;
@@ -46,7 +32,7 @@
             font-weight: bold;
         }
 
-        /* メインコンテンツエリア */
+        /* メインコンテンツ */
         main {
             padding: 20px;
         }
@@ -59,7 +45,6 @@
             width: 100%;
             background-color: #ffffff;
             border-top: 1px solid #e0e0e0;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
             z-index: 100;
         }
 
@@ -68,35 +53,43 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            height: 60px;
+            height: 80px; /* 円形ボタンに合わせて少し高くしました */
+            padding: 0 10px; /* 左右に少し余白を追加 */
         }
 
-        /* フッター内のボタン装飾 */
+        /* フッター内のボタン装飾（ここを丸に変更） */
         .footer-btn {
-            flex: 1;
-            height: 100%;
-            background: none;
+            background-color: #eeeeee; /* 初期状態は薄い灰色 */
             border: none;
-            color: #333333;
-            font-size: 14px;
+            color: #333333; /* 文字色：黒っぽい灰色 */
+            font-size: 13px; /* 文字を少し小さくして収まりを良くしました */
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            transition: all 0.2s; /* 変化をなめらかに */
+            
+            /* 👇 丸くするための設定 */
+            width: 65px; /* ボタンの幅 */
+            height: 65px; /* ボタンの高さ */
+            border-radius: 50%; /* 正円にする */
+            
+            /* 👇 文字を中央配置する設定 */
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0;
+            text-align: center;
+            
+            /* 少し立体感を出す影 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* ボタンを押したとき・ホバーしたときのエフェクト */
         .footer-btn:hover, .footer-btn:active {
-            background-color: #f0f0f0;
-            color: #d0021b; /* 押し時に名鉄赤に変化 */
+            background-color: #d0021b; /* 背景を名鉄赤に */
+            color: #ffffff;            /* 文字色を白に */
+            box-shadow: 0 4px 8px rgba(208, 2, 27, 0.3); /* 影を赤っぽく強く */
         }
 
-        /* ボタン同士の境界線 */
-        .footer-btn:not(:last-child) {
-            border-right: 1px solid #eeeeee;
-        }
     </style>
 </head>
 <body>
@@ -111,15 +104,14 @@
         <p>ここに回送情報のコンテンツが入ります。</p>
     </main>
 
-    <!-- 👇 ここからフッターボタン部分です -->
+    <!-- フッターボタン部分（デザイン変更） -->
     <footer>
         <nav class="footer-nav">
-            <button class="footer-btn" onclick="alert('最新情報画面を開きます')">最新情報</button>
+            <button class="footer-btn" onclick="alert('最新情報画面を開きます')">最新<br>情報</button>
             <button class="footer-btn" onclick="alert('投稿欄画面を開きます')">投稿欄</button>
             <button class="footer-btn" onclick="alert('履歴画面を開きます')">履歴</button>
         </nav>
     </footer>
-    <!-- 👆 ここまで -->
 
 </body>
 </html>
