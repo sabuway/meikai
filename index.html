@@ -48,3 +48,115 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>名鉄回送情報共有</title>
+    <style>
+        /* 全体の基本設定 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background-color: #f5f5f5;
+            /* フッターに被らないよう下に余白を確保 */
+            padding-bottom: 70px;
+        }
+
+        /* ヘッダー（背景赤・文字白） */
+        header {
+            background-color: #d0021b;
+            color: #ffffff;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* メインコンテンツエリア */
+        main {
+            padding: 20px;
+        }
+
+        /* フッター（画面下部に固定） */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        /* ボタンを横並びにするナビゲーション */
+        .footer-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+        }
+
+        /* フッター内のボタン装飾 */
+        .footer-btn {
+            flex: 1;
+            height: 100%;
+            background: none;
+            border: none;
+            color: #333333;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ボタンを押したとき・ホバーしたときのエフェクト */
+        .footer-btn:hover, .footer-btn:active {
+            background-color: #f0f0f0;
+            color: #d0021b; /* 押し時に名鉄赤に変化 */
+        }
+
+        /* ボタン同士の境界線 */
+        .footer-btn:not(:last-child) {
+            border-right: 1px solid #eeeeee;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ヘッダー -->
+    <header>
+        <h1>名鉄回送情報共有</h1>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main>
+        <p>ここに回送情報のコンテンツが入ります。</p>
+    </main>
+
+    <!-- 👇 ここからフッターボタン部分です -->
+    <footer>
+        <nav class="footer-nav">
+            <button class="footer-btn" onclick="alert('最新情報画面を開きます')">最新情報</button>
+            <button class="footer-btn" onclick="alert('投稿欄画面を開きます')">投稿欄</button>
+            <button class="footer-btn" onclick="alert('履歴画面を開きます')">履歴</button>
+        </nav>
+    </footer>
+    <!-- 👆 ここまで -->
+
+</body>
+</html>
