@@ -213,7 +213,7 @@
             font-weight: bold;
         }
 
-        /* 併結入力エリア (横並び) */
+        /* 併結入力エリア (横並び・ト方/キ方ガイド付き) */
         .coupling-inputs-area {
             display: none;
             margin-top: 10px;
@@ -227,39 +227,71 @@
             display: block;
         }
 
+        .coupling-guide-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: bold;
+            color: #d0021b;
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+
+        .coupling-row-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
         .coupling-row-horizontal {
             display: flex;
             align-items: center;
             gap: 6px;
             flex-wrap: nowrap;
             overflow-x: auto;
+            flex: 1;
         }
 
         .coupling-field {
-            min-width: 70px;
+            min-width: 65px;
             flex: 1;
             padding: 10px 4px;
             text-align: center;
             font-size: 15px;
         }
 
-        .add-coupling-btn {
-            background-color: #28a745;
+        /* ＋ / － ボタンエリア (右下) */
+        .coupling-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .coupling-action-btn {
             color: white;
             border: none;
-            width: 36px;
-            height: 42px;
-            font-size: 18px;
+            width: 32px;
+            height: 20px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
         }
 
-        .add-coupling-btn:disabled {
+        .btn-add-green {
+            background-color: #28a745;
+        }
+
+        .btn-remove-red {
+            background-color: #dc3545;
+        }
+
+        .coupling-action-btn:disabled {
             background-color: #ccc;
             cursor: not-allowed;
         }
@@ -612,10 +644,20 @@
                             <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
                         </div>
 
-                        <!-- 併結時入力欄エリア（横並び） -->
+                        <!-- 併結時入力欄エリア（ト方/キ方ガイド・緑/赤ボタン付き） -->
                         <div id="couplingInputsArea" class="coupling-inputs-area">
-                            <div id="couplingInputsList" class="coupling-row-horizontal">
-                                <!-- JSで動的生成（横並び） -->
+                            <div class="coupling-guide-header">
+                                <span>ト方</span>
+                                <span>キ方</span>
+                            </div>
+                            <div class="coupling-row-wrapper">
+                                <div id="couplingInputsList" class="coupling-row-horizontal">
+                                    <!-- JSで動的生成 -->
+                                </div>
+                                <div class="coupling-actions">
+                                    <button type="button" class="coupling-action-btn btn-add-green" onclick="addCouplingField()">＋</button>
+                                    <button type="button" class="coupling-action-btn btn-remove-red" onclick="removeCouplingField()">－</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -732,11 +774,11 @@
         const postsData = [];
         let currentFilter = 'all';
         let currentSyoteiDay = 'weekday';
-        let selectedPostSchedule = null; // デフォルト: 未選択 (null)
+        let selectedPostSchedule = null;
 
-        // 併結管理用変数
+        // 併結管理用変数 (最小2, 最大4)
         let isCouplingActive = false;
-        let couplingCount = 2; // デフォルト 2個
+        let couplingCount = 2; 
 
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
@@ -747,7 +789,6 @@
             }
         }
 
-        // 投稿画面の「平日/休日ダイヤ」切り替え
         function selectPostSchedule(scheduleType) {
             selectedPostSchedule = scheduleType;
             const btnWeekday = document.getElementById('btn-post-weekday');
@@ -765,7 +806,6 @@
             }
         }
 
-        // 併結ボタンのON/OFF切替
         function toggleCoupling() {
             isCouplingActive = !isCouplingActive;
             const toggleBtn = document.getElementById('couplingToggleBtn');
@@ -777,7 +817,7 @@
                 toggleBtn.classList.add('active');
                 formationInput.disabled = true;
                 formationInput.removeAttribute('required');
-                formationInput.value = ''; // 通常入力クリア
+                formationInput.value = '';
                 couplingArea.classList.add('active');
                 couplingCount = 2; // 初期数2
                 renderCouplingFields();
@@ -790,37 +830,24 @@
             }
         }
 
-        // 併結入力欄の描画（ご指定の順序で横並び）
+        // 併結入力欄の描画（例: 3501, 3101, 3151, 9101）
+        const couplingExamples = ["3501", "3101", "3151", "9101"];
+
         function renderCouplingFields() {
             const container = document.getElementById('couplingInputsList');
             let html = '';
 
-            // 1個目の入力欄
-            html += `
-                <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="3501" maxlength="4" oninput="onlyNumbers(this)">
-            `;
-
-            // 「＋」ボタン
-            html += `
-                <button type="button" class="add-coupling-btn" onclick="addCouplingField()" ${couplingCount >= 4 ? 'disabled' : ''}>＋</button>
-            `;
-
-            // 2個目の入力欄
-            html += `
-                <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="3101" maxlength="4" oninput="onlyNumbers(this)">
-            `;
-
-            // 3個目、4個目の入力欄（追加された場合）
-            for (let i = 3; i <= couplingCount; i++) {
+            for (let i = 0; i < couplingCount; i++) {
+                const placeholderVal = couplingExamples[i] || "3501";
                 html += `
-                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="9101" maxlength="4" oninput="onlyNumbers(this)">
+                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" oninput="onlyNumbers(this)">
                 `;
             }
 
             container.innerHTML = html;
         }
 
-        // 併結欄を増やす（最大4個まで）
+        // 併結欄を増やす（最大4）
         function addCouplingField() {
             if (couplingCount < 4) {
                 couplingCount++;
@@ -828,25 +855,29 @@
             }
         }
 
-        // 回送所定の平日/休日切替
+        // 併結欄を減らす（最小2）
+        function removeCouplingField() {
+            if (couplingCount > 2) {
+                couplingCount--;
+                renderCouplingFields();
+            }
+        }
+
         function selectSyoteiDay(dayType, btnElement) {
             currentSyoteiDay = dayType;
             document.querySelectorAll('.syotei-tab-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
         }
 
-        // 所定詳細ボタンタップ時
         function openSyoteiDetail(type) {
             const dayText = currentSyoteiDay === 'weekday' ? '平日' : '休日';
             alert(`【${dayText}・${type}所定】の回送ダイヤ一覧を表示します（今後登録可能）。`);
         }
 
-        // 数字のみ制限
         function onlyNumbers(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
 
-        // 時刻の厳格チェックと24時以降補正関数
         function finalizeTimeFormat(input) {
             let raw = input.value.replace(/[^0-9]/g, '');
             if (!raw) {
@@ -890,13 +921,11 @@
         function handlePost(event) {
             event.preventDefault();
 
-            // 1. ダイヤ種別 未選択チェック
             if (!selectedPostSchedule) {
                 alert('ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
                 return;
             }
 
-            // 編成番号取得（単独 or 併結）
             let formationFormatted = '';
             if (!isCouplingActive) {
                 const formationInput = document.getElementById('formation').value.trim();
@@ -908,16 +937,22 @@
             } else {
                 const fields = document.querySelectorAll('.coupling-field');
                 const validVals = [];
+                const seenVals = new Set();
+
                 for (let field of fields) {
                     const val = field.value.trim();
-                    if (val) {
-                        if (val.length !== 4) {
-                            alert('併結の編成番号はすべて4桁の数字で入力してください。');
-                            return;
-                        }
-                        validVals.push(val + 'F');
+                    if (!val || (val.length !== 3 && val.length !== 4)) {
+                        alert('警告、編成の入力欄に同じ編成番号を検知しました。もう一度確認してください。');
+                        return;
                     }
+                    if (seenVals.has(val)) {
+                        alert('警告、編成の入力欄に同じ編成番号を検知しました。もう一度確認してください。');
+                        return;
+                    }
+                    seenVals.add(val);
+                    validVals.push(val + 'F');
                 }
+
                 if (validVals.length < 2) {
                     alert('併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
@@ -925,7 +960,6 @@
                 formationFormatted = validVals.join('+');
             }
 
-            // 時刻要素の取得＆個別フォーマット補正
             const passInput = document.getElementById('passingTime');
             const arrInput = document.getElementById('arrivalTime');
             const depInput = document.getElementById('departureTime');
@@ -938,7 +972,6 @@
             const arrTime = arrInput.value;
             const depTime = depInput.value;
 
-            // 2. 「通過」「到着」「発車」のいずれか1つ以上の入力チェック
             if (!passTime && !arrTime && !depTime) {
                 alert('「通過時刻」「到着時刻」「発車時刻」のうち、少なくとも1つを入力してください。');
                 return;
@@ -972,23 +1005,20 @@
             postsData.unshift(newPost);
             filterHistory();
 
-            // フォームのリセットと併結状態の復元
             document.getElementById('postForm').reset();
             if (isCouplingActive) {
-                toggleCoupling(); // OFFに戻す
+                toggleCoupling();
             }
-            selectPostSchedule(null); // 投稿後は未選択状態に戻す
+            selectPostSchedule(null);
             alert('投稿が完了しました！');
             switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
         }
 
-        // 「列番」かつ「同じダイヤ種別（平日/休日）」の投稿件数を取得
         function getTrainNumCount(trainNum, isHoliday) {
             if (!trainNum || trainNum === '指定なし') return 0;
             return postsData.filter(p => p.trainNum === trainNum && p.isHoliday === isHoliday).length;
         }
 
-        // 時刻表示文字列作成のヘルパー関数 (通過 → 到着 → 発車 の順)
         function getTimeDisplayString(post) {
             const times = [];
             if (post.passTime) times.push(`通: ${post.passTime}`);
@@ -997,12 +1027,10 @@
             return times.join(' / ');
         }
 
-        // 時刻順ソート用比較キーを取得
         function getSortTime(post) {
             return post.passTime || post.arrTime || post.depTime || '';
         }
 
-        // 運用履歴モーダル表示
         function openOperationHistory(trainNum, isHoliday) {
             const modal = document.getElementById('historyModal');
             const title = document.getElementById('modalTitle');
