@@ -11,7 +11,7 @@
             padding: 0;
             font-family: sans-serif;
             background-color: #f5f5f5;
-            padding-bottom: 90px; /* フッターが高くなった分、下の余白を広げました */
+            padding-bottom: 90px;
         }
 
         /* ヘッダー */
@@ -32,12 +32,90 @@
             font-weight: bold;
         }
 
-        /* メインコンテンツ */
+        /* メインコンテンツエリア */
         main {
             padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        /* フッター（画面下部に固定） */
+        /* ビュー（画面）切替 */
+        .view-section {
+            display: none;
+        }
+        .view-section.active {
+            display: block;
+        }
+
+        /* フォームのデザイン */
+        .form-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .optional-badge {
+            font-size: 11px;
+            background-color: #e0e0e0;
+            color: #666;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-weight: normal;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px; /* スマホで自動ズームしないサイズ */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #d0021b;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* 送信ボタン */
+        .submit-btn {
+            width: 100%;
+            background-color: #d0021b;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(208, 2, 27, 0.3);
+        }
+
+        .submit-btn:active {
+            opacity: 0.8;
+        }
+
+        /* フッター固定ナビ */
         footer {
             position: fixed;
             bottom: 0;
@@ -48,48 +126,38 @@
             z-index: 100;
         }
 
-        /* ボタンを横並びにするナビゲーション */
         .footer-nav {
             display: flex;
             justify-content: space-around;
             align-items: center;
-            height: 80px; /* 円形ボタンに合わせて少し高くしました */
-            padding: 0 10px; /* 左右に少し余白を追加 */
+            height: 80px;
+            padding: 0 10px;
         }
 
-        /* フッター内のボタン装飾（ここを丸に変更） */
         .footer-btn {
-            background-color: #eeeeee; /* 初期状態は薄い灰色 */
+            background-color: #eeeeee;
             border: none;
-            color: #333333; /* 文字色：黒っぽい灰色 */
-            font-size: 13px; /* 文字を少し小さくして収まりを良くしました */
+            color: #333333;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s; /* 変化をなめらかに */
-            
-            /* 👇 丸くするための設定 */
-            width: 65px; /* ボタンの幅 */
-            height: 65px; /* ボタンの高さ */
-            border-radius: 50%; /* 正円にする */
-            
-            /* 👇 文字を中央配置する設定 */
+            transition: all 0.2s;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
             text-align: center;
-            
-            /* 少し立体感を出す影 */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* ボタンを押したとき・ホバーしたときのエフェクト */
-        .footer-btn:hover, .footer-btn:active {
-            background-color: #d0021b; /* 背景を名鉄赤に */
-            color: #ffffff;            /* 文字色を白に */
-            box-shadow: 0 4px 8px rgba(208, 2, 27, 0.3); /* 影を赤っぽく強く */
+        .footer-btn.active, .footer-btn:hover {
+            background-color: #d0021b;
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(208, 2, 27, 0.3);
         }
-
     </style>
 </head>
 <body>
@@ -101,17 +169,138 @@
 
     <!-- メインコンテンツ -->
     <main>
-        <p>ここに回送情報のコンテンツが入ります。</p>
+        <!-- 1. 最新情報画面 -->
+        <section id="latest-view" class="view-section active">
+            <h2>最新情報</h2>
+            <p>ここに投稿された情報が一覧表示されます。</p>
+        </section>
+
+        <!-- 2. 投稿欄画面（今回作成部分） -->
+        <section id="post-view" class="view-section">
+            <div class="form-card">
+                <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
+                <form id="postForm" onsubmit="handlePost(event)">
+                    
+                    <!-- ① 列番 (任意 / 数字キーボード) -->
+                    <div class="form-group">
+                        <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
+                        <input type="text" id="trainNumber" class="form-control" inputmode="numeric" placeholder="例: 9004">
+                    </div>
+
+                    <!-- ② 方面 (文字入力) -->
+                    <div class="form-group">
+                        <label for="direction">方面 <span style="color:red;">*</span></label>
+                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" required>
+                    </div>
+
+                    <!-- ③ 編成番号 (数字のみ / 数字キーボード) -->
+                    <div class="form-group">
+                        <label for="formation">編成番号 <span style="color:red;">*</span></label>
+                        <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="例: 3501" oninput="onlyNumbers(this)" required>
+                    </div>
+
+                    <!-- ④ 発車時刻 (最大4桁数字 / 自動コロン整形) -->
+                    <div class="form-group">
+                        <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 0915 ➔ 09:15" maxlength="5" oninput="formatTimeInput(this)" required>
+                    </div>
+
+                    <!-- ⑤ 備考欄 (何でも入力可能) -->
+                    <div class="form-group">
+                        <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
+                        <textarea id="remarks" class="form-control" placeholder="何でも入力できます（被り情報、試運転の有無など）"></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">投稿する</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. 履歴画面 -->
+        <section id="history-view" class="view-section">
+            <h2>履歴</h2>
+            <p>過去に投稿された履歴がここに表示されます。</p>
+        </section>
     </main>
 
-    <!-- フッターボタン部分（デザイン変更） -->
+    <!-- フッターボタン -->
     <footer>
         <nav class="footer-nav">
-            <button class="footer-btn" onclick="alert('最新情報画面を開きます')">最新<br>情報</button>
-            <button class="footer-btn" onclick="alert('投稿欄画面を開きます')">投稿欄</button>
-            <button class="footer-btn" onclick="alert('履歴画面を開きます')">履歴</button>
+            <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
+            <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
+            <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
         </nav>
     </footer>
 
+    <script>
+        // 画面切り替えの処理
+        function switchView(viewId, btnElement) {
+            // すべての画面を非表示にする
+            const views = document.querySelectorAll('.view-section');
+            views.forEach(v => v.classList.remove('active'));
+
+            // すべてのボタンの選択状態を解除
+            const buttons = document.querySelectorAll('.footer-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+
+            // 指定された画面とボタンをアクティブにする
+            document.getElementById(viewId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // 数字のみ入力制限（編成番号用）
+        function onlyNumbers(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+
+        // 発車時刻の自動整形（数字のみ4桁で 09:15 などの時計表記へ）
+        function formatTimeInput(input) {
+            // 数字以外を削除
+            let raw = input.value.replace(/[^0-9]/g, '');
+            
+            // 最大4桁に制限
+            if (raw.length > 4) {
+                raw = raw.slice(0, 4);
+            }
+
+            // 桁数に応じた整形処理
+            if (raw.length <= 2) {
+                input.value = raw;
+            } else {
+                // 3桁または4桁のときは「2桁 : 残り」の形式に整形
+                const hours = raw.slice(0, 2);
+                const minutes = raw.slice(2);
+                input.value = hours + ':' + minutes;
+            }
+        }
+
+        // 投稿の処理（テスト動作確認用）
+        function handlePost(event) {
+            event.preventDefault();
+
+            // 各入力値の取得
+            const trainNum = document.getElementById('trainNumber').value || '指定なし';
+            const rawDirection = document.getElementById('direction').value;
+            // 指定通り「(方面)」を後ろに付与
+            const directionFormatted = rawDirection + '（方面）';
+            const formation = document.getElementById('formation').value;
+            const depTime = document.getElementById('departureTime').value;
+            const remarks = document.getElementById('remarks').value || 'なし';
+
+            // 投稿内容の確認アラート
+            alert(
+                `【投稿完了テスト】\n` +
+                `・列番: ${trainNum}\n` +
+                `・方面: ${directionFormatted}\n` +
+                `・編成番号: ${formation}\n` +
+                `・発車時刻: ${depTime}\n` +
+                `・備考: ${remarks}`
+            );
+
+            // フォームをリセットして最新情報画面に戻る
+            document.getElementById('postForm').reset();
+            switchView('latest-view', document.querySelectorAll('.footer-btn')[0]);
+        }
+    </script>
 </body>
 </html>
