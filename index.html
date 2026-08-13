@@ -112,6 +112,32 @@
             color: #333;
         }
 
+        /* 平日/休日 ダイヤ選択ボタングループ */
+        .schedule-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .schedule-btn {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .schedule-btn.active {
+            background-color: #d0021b;
+            color: #ffffff;
+            border-color: #d0021b;
+        }
+
         .optional-badge {
             font-size: 11px;
             background-color: #e0e0e0;
@@ -452,6 +478,15 @@
             <div class="form-card">
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
                 <form id="postForm" onsubmit="handlePost(event)">
+
+                    <!-- 平日/休日 ダイヤ選択 (初期状態: 未選択) -->
+                    <div class="form-group">
+                        <label>ダイヤ種別 <span style="color:red;">*</span></label>
+                        <div class="schedule-btn-group">
+                            <button type="button" class="schedule-btn" id="btn-post-weekday" onclick="selectPostSchedule('weekday')">平日ダイヤ</button>
+                            <button type="button" class="schedule-btn" id="btn-post-holiday" onclick="selectPostSchedule('holiday')">休日ダイヤ</button>
+                        </div>
+                    </div>
                     
                     <div class="form-group">
                         <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
@@ -569,6 +604,7 @@
         const postsData = [];
         let currentFilter = 'all';
         let currentSyoteiDay = 'weekday';
+        let selectedPostSchedule = null; // デフォルト: 未選択 (null)
 
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
@@ -576,6 +612,24 @@
             document.getElementById(viewId).classList.add('active');
             if (btnElement) {
                 btnElement.classList.add('active');
+            }
+        }
+
+        // 投稿画面の「平日/休日ダイヤ」切り替え
+        function selectPostSchedule(scheduleType) {
+            selectedPostSchedule = scheduleType;
+            const btnWeekday = document.getElementById('btn-post-weekday');
+            const btnHoliday = document.getElementById('btn-post-holiday');
+
+            if (scheduleType === 'weekday') {
+                btnWeekday.classList.add('active');
+                btnHoliday.classList.remove('active');
+            } else if (scheduleType === 'holiday') {
+                btnHoliday.classList.add('active');
+                btnWeekday.classList.remove('active');
+            } else {
+                btnWeekday.classList.remove('active');
+                btnHoliday.classList.remove('active');
             }
         }
 
@@ -638,6 +692,12 @@
         function handlePost(event) {
             event.preventDefault();
 
+            // 未選択チェック (必須判定)
+            if (!selectedPostSchedule) {
+                alert('ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
+                return;
+            }
+
             const formationInput = document.getElementById('formation').value.trim();
             if (formationInput.length !== 4) {
                 alert('編成番号は4桁の数字で入力してください。');
@@ -657,8 +717,7 @@
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
             const now = new Date();
-            const dayOfWeek = now.getDay();
-            const isHoliday = (dayOfWeek === 0 || dayOfWeek === 6);
+            const isHoliday = (selectedPostSchedule === 'holiday');
             const dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -678,6 +737,7 @@
             filterHistory();
 
             document.getElementById('postForm').reset();
+            selectPostSchedule(null); // 投稿後は未選択状態に戻す
             alert('投稿が完了しました！');
             switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
         }
