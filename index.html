@@ -213,7 +213,7 @@
             font-weight: bold;
         }
 
-        /* 併結入力エリア */
+        /* 併結入力エリア (横並び) */
         .coupling-inputs-area {
             display: none;
             margin-top: 10px;
@@ -227,27 +227,28 @@
             display: block;
         }
 
-        .coupling-row {
+        .coupling-row-horizontal {
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .coupling-row:last-child {
-            margin-bottom: 0;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
 
         .coupling-field {
+            min-width: 70px;
             flex: 1;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 15px;
         }
 
         .add-coupling-btn {
             background-color: #28a745;
             color: white;
             border: none;
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 42px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 6px;
@@ -611,10 +612,10 @@
                             <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
                         </div>
 
-                        <!-- 併結時入力欄エリア -->
+                        <!-- 併結時入力欄エリア（横並び） -->
                         <div id="couplingInputsArea" class="coupling-inputs-area">
-                            <div id="couplingInputsList">
-                                <!-- JSで動的生成（初期2件） -->
+                            <div id="couplingInputsList" class="coupling-row-horizontal">
+                                <!-- JSで動的生成（横並び） -->
                             </div>
                         </div>
                     </div>
@@ -637,7 +638,7 @@
                     <!-- 発車時間 (下段) -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 789" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 789 (➔ 07:89)" maxlength="5" onblur="finalizeTimeFormat(this)">
                     </div>
 
                     <div class="form-group">
@@ -789,32 +790,30 @@
             }
         }
 
-        // 併結入力欄の描画（デフォルト2個、最大4個まで「＋」で増加）
+        // 併結入力欄の描画（ご指定の順序で横並び）
         function renderCouplingFields() {
             const container = document.getElementById('couplingInputsList');
             let html = '';
 
-            // 1行目: 左側入力欄 (欄1)
+            // 1個目の入力欄
             html += `
-                <div class="coupling-row">
-                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成1 (例: 3501)" maxlength="4" oninput="onlyNumbers(this)">
-                </div>
+                <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="3501" maxlength="4" oninput="onlyNumbers(this)">
             `;
 
-            // 2行目: 右側入力欄 (欄2) と「＋」ボタン (左側に配置)
+            // 「＋」ボタン
             html += `
-                <div class="coupling-row">
-                    <button type="button" class="add-coupling-btn" onclick="addCouplingField()" ${couplingCount >= 4 ? 'disabled' : ''}>＋</button>
-                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成2 (例: 3101)" maxlength="4" oninput="onlyNumbers(this)">
-                </div>
+                <button type="button" class="add-coupling-btn" onclick="addCouplingField()" ${couplingCount >= 4 ? 'disabled' : ''}>＋</button>
             `;
 
-            // 3行目以降: 3個目、4個目の欄
+            // 2個目の入力欄
+            html += `
+                <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="3101" maxlength="4" oninput="onlyNumbers(this)">
+            `;
+
+            // 3個目、4個目の入力欄（追加された場合）
             for (let i = 3; i <= couplingCount; i++) {
                 html += `
-                    <div class="coupling-row">
-                        <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成${i} (例: 9101)" maxlength="4" oninput="onlyNumbers(this)">
-                    </div>
+                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="9101" maxlength="4" oninput="onlyNumbers(this)">
                 `;
             }
 
