@@ -190,7 +190,7 @@
             cursor: pointer;
         }
 
-        /* セクションヘッダー（タイトル＋右側ボタン） */
+        /* セクションヘッダー */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -202,18 +202,6 @@
             font-size: 18px;
             color: #333;
             margin: 0;
-        }
-
-        .header-nav-btn {
-            background-color: #d0021b;
-            color: #ffffff;
-            border: none;
-            padding: 8px 12px;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* 回送所定一覧スタイル */
@@ -394,7 +382,7 @@
             border-radius: 50%;
         }
 
-        /* フッター固定ナビ */
+        /* フッター固定ナビ (4項目用に微調整) */
         footer {
             position: fixed;
             bottom: 0;
@@ -410,22 +398,26 @@
             justify-content: space-around;
             align-items: center;
             height: 80px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .footer-btn {
             background-color: #eeeeee;
             border: none;
             color: #333333;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
-            width: 65px;
-            height: 65px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
+            line-height: 1.2;
+            padding: 0;
         }
 
         .footer-btn.active {
@@ -510,8 +502,6 @@
 
             <div class="section-header">
                 <h2>投稿履歴一覧</h2>
-                <!-- 履歴画面の右側に配置した「回送所定」ボタン -->
-                <button class="header-nav-btn" onclick="openSyoteiView()">回送所定</button>
             </div>
 
             <div id="history-list">
@@ -523,7 +513,6 @@
         <section id="syotei-view" class="view-section">
             <div class="section-header">
                 <h2>回送所定一覧</h2>
-                <button class="header-nav-btn" style="background-color: #666;" onclick="switchView('history-view', document.getElementById('history-nav-btn'))">◀ 履歴へ戻る</button>
             </div>
 
             <!-- 平日 / 休日 切替タブ -->
@@ -571,7 +560,8 @@
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
-            <button class="footer-btn" id="history-nav-btn" onclick="switchView('history-view', this)">履歴</button>
+            <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
+            <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
         </nav>
     </footer>
 
@@ -587,11 +577,6 @@
             if (btnElement) {
                 btnElement.classList.add('active');
             }
-        }
-
-        // 回送所定一覧画面を開く
-        function openSyoteiView() {
-            switchView('syotei-view', document.getElementById('history-nav-btn'));
         }
 
         // 回送所定の平日/休日切替
@@ -694,7 +679,7 @@
 
             document.getElementById('postForm').reset();
             alert('投稿が完了しました！');
-            switchView('history-view', document.getElementById('history-nav-btn'));
+            switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
         }
 
         function getTrainNumCount(trainNum) {
