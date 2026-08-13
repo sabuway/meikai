@@ -48,12 +48,30 @@
         }
 
         /* フォーム・カードのデザイン */
-        .form-card, .post-card {
+        .form-card {
             background: #ffffff;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             margin-bottom: 15px;
+        }
+
+        /* 投稿表示カード (背景色の切り替え対応) */
+        .post-card {
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            transition: background-color 0.2s;
+        }
+
+        /* 平日：白 / 休日：薄いピンク */
+        .post-card.weekday {
+            background-color: #ffffff;
+        }
+        .post-card.holiday {
+            background-color: #fff0f3;
+            border: 1px solid #ffccd5;
         }
 
         .form-group {
@@ -98,10 +116,10 @@
             min-height: 80px;
         }
 
-        /* 検索ボックス専用スタイル */
+        /* 検索・フィルターエリア */
         .search-box-card {
             background: #ffffff;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-radius: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             margin-bottom: 15px;
@@ -110,6 +128,32 @@
         .search-input {
             border-color: #ddd;
             background-color: #fafafa;
+            margin-bottom: 10px;
+        }
+
+        /* フィルターボタン群 */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 8px 0;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background-color: #d0021b;
+            color: #ffffff;
+            border-color: #d0021b;
         }
 
         /* 送信ボタン */
@@ -130,7 +174,7 @@
             opacity: 0.8;
         }
 
-        /* 投稿表示カードのデザイン */
+        /* 投稿カード内部デザイン */
         .post-header {
             display: flex;
             justify-content: space-between;
@@ -146,9 +190,31 @@
             color: #d0021b;
         }
 
+        .post-time-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 同一列番の履歴ボタン */
+        .same-train-btn {
+            background-color: #e63946;
+            color: #ffffff;
+            border: none;
+            padding: 3px 7px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .same-train-btn:hover {
+            opacity: 0.8;
+        }
+
         .post-time {
             font-size: 14px;
-            color: #666;
+            color: #444;
             font-weight: bold;
         }
 
@@ -162,7 +228,7 @@
         }
 
         .post-remarks {
-            background-color: #f9f9f9;
+            background-color: rgba(0,0,0,0.03);
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 13px;
@@ -230,9 +296,9 @@
 
     <!-- メインコンテンツ -->
     <main>
-        <!-- 1. 最新情報画面 -->
+        <!-- 1. 最新情報画面（直近5件を表示） -->
         <section id="latest-view" class="view-section active">
-            <h2 style="font-size: 18px; color: #333;">最新の目撃情報</h2>
+            <h2 style="font-size: 18px; color: #333;">最新の目撃情報（直近5件）</h2>
             <div id="latest-list">
                 <p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>
             </div>
@@ -285,11 +351,19 @@
             </div>
         </section>
 
-        <!-- 3. 履歴画面（最上部に検索バーを配置） -->
+        <!-- 3. 履歴画面（全件表示＆検索・ボタンフィルター付き） -->
         <section id="history-view" class="view-section">
-            <!-- 🔍 検索用入力バー -->
             <div class="search-box-card">
+                <!-- 🔍 検索ボックス -->
                 <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番・編成など)" oninput="filterHistory()">
+                
+                <!-- 📅 日付フィルターボタン群 -->
+                <div class="filter-buttons">
+                    <button class="filter-btn active" id="btn-all" onclick="setDateFilter('all', this)">全件</button>
+                    <button class="filter-btn" id="btn-today" onclick="setDateFilter('today', this)">今日</button>
+                    <button class="filter-btn" id="btn-weekday" onclick="setDateFilter('weekday', this)">平日</button>
+                    <button class="filter-btn" id="btn-holiday" onclick="setDateFilter('holiday', this)">休日</button>
+                </div>
             </div>
 
             <h2 style="font-size: 18px; color: #333;">投稿履歴一覧</h2>
@@ -311,6 +385,8 @@
     <script>
         // 投稿データを保持する配列
         const postsData = [];
+        // 現在選択中の日付フィルター ('all' | 'today' | 'weekday' | 'holiday')
+        let currentFilter = 'all';
 
         // 画面切り替え処理
         function switchView(viewId, btnElement) {
@@ -324,7 +400,7 @@
             btnElement.classList.add('active');
         }
 
-        // 数字のみ制限（編成番号用）
+        // 数字のみ制限
         function onlyNumbers(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
@@ -354,17 +430,20 @@
             const depTimeInput = document.getElementById('departureTime');
             finalizeTimeFormat(depTimeInput);
 
-            const trainNum = document.getElementById('trainNumber').value || '指定なし';
-            const station = document.getElementById('station').value; // 確認駅
-            const rawDirection = document.getElementById('direction').value;
+            const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
+            const station = document.getElementById('station').value.trim();
+            const rawDirection = document.getElementById('direction').value.trim();
             const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
-            const formation = document.getElementById('formation').value;
+            const formation = document.getElementById('formation').value.trim();
             const depTime = depTimeInput.value;
-            const remarks = document.getElementById('remarks').value || 'なし';
+            const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
-            // 現在の日時を取得
+            // 現在の日時情報を取得
             const now = new Date();
-            const postDateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const dayOfWeek = now.getDay(); // 0:日, 6:土
+            const isHoliday = (dayOfWeek === 0 || dayOfWeek === 6); // 土日は休日扱い
+            const dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             // 投稿オブジェクト作成
             const newPost = {
@@ -374,7 +453,9 @@
                 formation: formation + 'F',
                 depTime: depTime,
                 remarks: remarks,
-                postDate: postDateStr
+                postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
+                rawDate: dateStr,
+                isHoliday: isHoliday
             };
 
             // 先頭に新しい投稿を追加
@@ -387,18 +468,42 @@
             document.getElementById('postForm').reset();
             alert('投稿が完了しました！');
 
-            // 👈 投稿完了後に「履歴」画面に飛ぶように指定
+            // 投稿完了後に「履歴」画面に遷移
             const historyBtn = document.getElementById('history-nav-btn');
             switchView('history-view', historyBtn);
         }
 
-        // 投稿カード作成ヘルパー関数
+        // 同一列番の出現回数をカウントする関数
+        function getTrainNumCount(trainNum) {
+            if (!trainNum || trainNum === '指定なし') return 0;
+            return postsData.filter(p => p.trainNum === trainNum).length;
+        }
+
+        // 特定の列番で検索をかける関数
+        function searchByTrainNum(trainNum) {
+            document.getElementById('searchInput').value = trainNum;
+            filterHistory();
+        }
+
+        // 投稿カード作成ヘルパー関数（背景色と「同一列番の履歴」ボタン制御）
         function createPostCardHTML(post) {
+            const cardClass = post.isHoliday ? 'post-card holiday' : 'post-card weekday';
+            const sameCount = getTrainNumCount(post.trainNum);
+
+            // 同一列番が複数（2回以上）あればボタンを表示
+            let sameTrainBtnHTML = '';
+            if (sameCount >= 2) {
+                sameTrainBtnHTML = `<button class="same-train-btn" onclick="searchByTrainNum('${post.trainNum}')">列番の履歴</button>`;
+            }
+
             return `
-                <div class="post-card">
+                <div class="${cardClass}">
                     <div class="post-header">
                         <span class="post-title">${post.station} ➔ ${post.direction}</span>
-                        <span class="post-time">発車: ${post.depTime}</span>
+                        <div class="post-time-container">
+                            ${sameTrainBtnHTML}
+                            <span class="post-time">発車: ${post.depTime}</span>
+                        </div>
                     </div>
                     <div class="post-details">
                         <div><strong>列番:</strong> ${post.trainNum}</div>
@@ -407,32 +512,42 @@
                     <div class="post-remarks">
                         <strong>備考:</strong> ${post.remarks}
                     </div>
-                    <div style="font-size: 11px; color: #999; text-align: right; margin-top: 6px;">
-                        投稿日時: ${post.postDate}
+                    <div style="font-size: 11px; color: #888; text-align: right; margin-top: 6px;">
+                        ${post.isHoliday ? '【休日】' : '【平日】'} ${post.postDate}
                     </div>
                 </div>
             `;
+        }
+
+        // 日付フィルター切り替え
+        function setDateFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            filterHistory();
         }
 
         // 投稿一覧を描画する関数
         function renderPosts() {
             const latestContainer = document.getElementById('latest-list');
             
+            // 最新情報画面：直近5件のみ
             if (postsData.length === 0) {
                 latestContainer.innerHTML = '<p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>';
             } else {
                 let latestHtml = '';
-                postsData.forEach(post => {
+                const latestFive = postsData.slice(0, 5);
+                latestFive.forEach(post => {
                     latestHtml += createPostCardHTML(post);
                 });
                 latestContainer.innerHTML = latestHtml;
             }
 
-            // 履歴一覧の更新（検索フィルターも考慮）
             filterHistory();
         }
 
-        // 🔍 履歴のリアルタイム検索機能
+        // 🔍 履歴の複合検索＆ボタンフィルター機能
         function filterHistory() {
             const historyContainer = document.getElementById('history-list');
             const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -442,10 +557,26 @@
                 return;
             }
 
-            // キーワードにヒットする投稿をフィルタリング
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
+
+            // キーワード ＆ 日付ボタンフィルターのダブル抽出
             const filteredPosts = postsData.filter(post => {
+                // 1. テキスト検索フィルタ
                 const combinedText = `${post.station} ${post.direction} ${post.trainNum} ${post.formation} ${post.remarks}`.toLowerCase();
-                return combinedText.includes(keyword);
+                const matchesKeyword = combinedText.includes(keyword);
+
+                // 2. 日付ボタンフィルタ
+                let matchesDate = true;
+                if (currentFilter === 'today') {
+                    matchesDate = (post.rawDate === todayStr);
+                } else if (currentFilter === 'weekday') {
+                    matchesDate = (!post.isHoliday);
+                } else if (currentFilter === 'holiday') {
+                    matchesDate = (post.isHoliday);
+                }
+
+                return matchesKeyword && matchesDate;
             });
 
             if (filteredPosts.length === 0) {
