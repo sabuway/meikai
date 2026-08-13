@@ -147,6 +147,14 @@
             margin-left: 6px;
         }
 
+        .time-condition-note {
+            font-size: 12px;
+            color: #d0021b;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
         .form-control {
             width: 100%;
             padding: 12px;
@@ -161,9 +169,98 @@
             border-color: #d0021b;
         }
 
+        .form-control:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+
         textarea.form-control {
             resize: vertical;
             min-height: 80px;
+        }
+
+        /* 併結オプションのスタイル */
+        .coupling-option-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .coupling-toggle-btn {
+            background-color: #e0e0e0;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .coupling-toggle-btn.active {
+            background-color: #d0021b;
+            color: #ffffff;
+            border-color: #d0021b;
+        }
+
+        .coupling-desc {
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        /* 併結入力エリア */
+        .coupling-inputs-area {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border: 1px dashed #d0021b;
+            border-radius: 8px;
+        }
+
+        .coupling-inputs-area.active {
+            display: block;
+        }
+
+        .coupling-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .coupling-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .coupling-field {
+            flex: 1;
+        }
+
+        .add-coupling-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            width: 38px;
+            height: 38px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .add-coupling-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
 
         /* 検索・フィルターエリア */
@@ -316,7 +413,7 @@
         }
 
         .post-time {
-            font-size: 14px;
+            font-size: 13px;
             color: #444;
             font-weight: bold;
         }
@@ -503,14 +600,44 @@
                         <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
                     </div>
 
+                    <!-- 編成番号 & 併結オプション -->
                     <div class="form-group">
                         <label for="formation">編成番号 <span style="color:red;">*</span></label>
                         <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
+                        
+                        <!-- 右下に設置されたオプションボタン -->
+                        <div class="coupling-option-container">
+                            <span class="coupling-desc">併結有</span>
+                            <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
+                        </div>
+
+                        <!-- 併結時入力欄エリア -->
+                        <div id="couplingInputsArea" class="coupling-inputs-area">
+                            <div id="couplingInputsList">
+                                <!-- JSで動的生成（初期2件） -->
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- 時刻入力条件注記 -->
+                    <p class="time-condition-note">※ 通過・到着・発車のうち少なくとも1つの入力が必要です</p>
+
+                    <!-- 通過時間 (上段) -->
                     <div class="form-group">
-                        <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 02:34 または 234" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                        <label for="passingTime">通過時刻 <span class="optional-badge">任意</span></label>
+                        <input type="text" id="passingTime" class="form-control" inputmode="numeric" placeholder="例: 123 (➔ 01:23)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                    </div>
+
+                    <!-- 到着時間 (中段) -->
+                    <div class="form-group">
+                        <label for="arrivalTime">到着時刻 <span class="optional-badge">任意</span></label>
+                        <input type="text" id="arrivalTime" class="form-control" inputmode="numeric" placeholder="例: 456 (➔ 04:56)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                    </div>
+
+                    <!-- 発車時間 (下段) -->
+                    <div class="form-group">
+                        <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 789" maxlength="5" onblur="finalizeTimeFormat(this)">
                     </div>
 
                     <div class="form-group">
@@ -606,6 +733,10 @@
         let currentSyoteiDay = 'weekday';
         let selectedPostSchedule = null; // デフォルト: 未選択 (null)
 
+        // 併結管理用変数
+        let isCouplingActive = false;
+        let couplingCount = 2; // デフォルト 2個
+
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.footer-btn').forEach(b => b.classList.remove('active'));
@@ -633,6 +764,71 @@
             }
         }
 
+        // 併結ボタンのON/OFF切替
+        function toggleCoupling() {
+            isCouplingActive = !isCouplingActive;
+            const toggleBtn = document.getElementById('couplingToggleBtn');
+            const formationInput = document.getElementById('formation');
+            const couplingArea = document.getElementById('couplingInputsArea');
+
+            if (isCouplingActive) {
+                toggleBtn.innerText = 'ON';
+                toggleBtn.classList.add('active');
+                formationInput.disabled = true;
+                formationInput.removeAttribute('required');
+                formationInput.value = ''; // 通常入力クリア
+                couplingArea.classList.add('active');
+                couplingCount = 2; // 初期数2
+                renderCouplingFields();
+            } else {
+                toggleBtn.innerText = 'OFF';
+                toggleBtn.classList.remove('active');
+                formationInput.disabled = false;
+                formationInput.setAttribute('required', 'required');
+                couplingArea.classList.remove('active');
+            }
+        }
+
+        // 併結入力欄の描画（デフォルト2個、最大4個まで「＋」で増加）
+        function renderCouplingFields() {
+            const container = document.getElementById('couplingInputsList');
+            let html = '';
+
+            // 1行目: 左側入力欄 (欄1)
+            html += `
+                <div class="coupling-row">
+                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成1 (例: 3501)" maxlength="4" oninput="onlyNumbers(this)">
+                </div>
+            `;
+
+            // 2行目: 右側入力欄 (欄2) と「＋」ボタン (左側に配置)
+            html += `
+                <div class="coupling-row">
+                    <button type="button" class="add-coupling-btn" onclick="addCouplingField()" ${couplingCount >= 4 ? 'disabled' : ''}>＋</button>
+                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成2 (例: 3101)" maxlength="4" oninput="onlyNumbers(this)">
+                </div>
+            `;
+
+            // 3行目以降: 3個目、4個目の欄
+            for (let i = 3; i <= couplingCount; i++) {
+                html += `
+                    <div class="coupling-row">
+                        <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="編成${i} (例: 9101)" maxlength="4" oninput="onlyNumbers(this)">
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 併結欄を増やす（最大4個まで）
+        function addCouplingField() {
+            if (couplingCount < 4) {
+                couplingCount++;
+                renderCouplingFields();
+            }
+        }
+
         // 回送所定の平日/休日切替
         function selectSyoteiDay(dayType, btnElement) {
             currentSyoteiDay = dayType;
@@ -654,7 +850,10 @@
         // 時刻の厳格チェックと24時以降補正関数
         function finalizeTimeFormat(input) {
             let raw = input.value.replace(/[^0-9]/g, '');
-            if (!raw) return;
+            if (!raw) {
+                input.value = '';
+                return;
+            }
 
             let h = 0;
             let m = 0;
@@ -669,7 +868,7 @@
                 h = parseInt(raw, 10);
                 m = 0;
             } else {
-                alert('時刻は「02:30」や「230」のように正しい形式で入力してください。');
+                alert('時刻は「01:23」や「123」のように正しい形式で入力してください。');
                 input.value = '';
                 return;
             }
@@ -692,28 +891,64 @@
         function handlePost(event) {
             event.preventDefault();
 
-            // 未選択チェック (必須判定)
+            // 1. ダイヤ種別 未選択チェック
             if (!selectedPostSchedule) {
                 alert('ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
                 return;
             }
 
-            const formationInput = document.getElementById('formation').value.trim();
-            if (formationInput.length !== 4) {
-                alert('編成番号は4桁の数字で入力してください。');
-                return;
+            // 編成番号取得（単独 or 併結）
+            let formationFormatted = '';
+            if (!isCouplingActive) {
+                const formationInput = document.getElementById('formation').value.trim();
+                if (formationInput.length !== 4) {
+                    alert('編成番号は4桁の数字で入力してください。');
+                    return;
+                }
+                formationFormatted = formationInput + 'F';
+            } else {
+                const fields = document.querySelectorAll('.coupling-field');
+                const validVals = [];
+                for (let field of fields) {
+                    const val = field.value.trim();
+                    if (val) {
+                        if (val.length !== 4) {
+                            alert('併結の編成番号はすべて4桁の数字で入力してください。');
+                            return;
+                        }
+                        validVals.push(val + 'F');
+                    }
+                }
+                if (validVals.length < 2) {
+                    alert('併結有の場合は、最低2つの編成番号を入力してください。');
+                    return;
+                }
+                formationFormatted = validVals.join('+');
             }
 
-            const depTimeInput = document.getElementById('departureTime');
-            finalizeTimeFormat(depTimeInput);
-            if (!depTimeInput.value) return;
+            // 時刻要素の取得＆個別フォーマット補正
+            const passInput = document.getElementById('passingTime');
+            const arrInput = document.getElementById('arrivalTime');
+            const depInput = document.getElementById('departureTime');
+
+            finalizeTimeFormat(passInput);
+            finalizeTimeFormat(arrInput);
+            finalizeTimeFormat(depInput);
+
+            const passTime = passInput.value;
+            const arrTime = arrInput.value;
+            const depTime = depInput.value;
+
+            // 2. 「通過」「到着」「発車」のいずれか1つ以上の入力チェック
+            if (!passTime && !arrTime && !depTime) {
+                alert('「通過時刻」「到着時刻」「発車時刻」のうち、少なくとも1つを入力してください。');
+                return;
+            }
 
             const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
             const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
-            const formation = formationInput;
-            const depTime = depTimeInput.value;
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
             const now = new Date();
@@ -725,7 +960,9 @@
                 trainNum: trainNum,
                 station: station,
                 direction: directionFormatted,
-                formation: formation + 'F',
+                formation: formationFormatted,
+                passTime: passTime,
+                arrTime: arrTime,
                 depTime: depTime,
                 remarks: remarks,
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
@@ -736,33 +973,55 @@
             postsData.unshift(newPost);
             filterHistory();
 
+            // フォームのリセットと併結状態の復元
             document.getElementById('postForm').reset();
+            if (isCouplingActive) {
+                toggleCoupling(); // OFFに戻す
+            }
             selectPostSchedule(null); // 投稿後は未選択状態に戻す
             alert('投稿が完了しました！');
             switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
         }
 
-        function getTrainNumCount(trainNum) {
+        // 「列番」かつ「同じダイヤ種別（平日/休日）」の投稿件数を取得
+        function getTrainNumCount(trainNum, isHoliday) {
             if (!trainNum || trainNum === '指定なし') return 0;
-            return postsData.filter(p => p.trainNum === trainNum).length;
+            return postsData.filter(p => p.trainNum === trainNum && p.isHoliday === isHoliday).length;
         }
 
-        function openOperationHistory(trainNum) {
+        // 時刻表示文字列作成のヘルパー関数 (通過 → 到着 → 発車 の順)
+        function getTimeDisplayString(post) {
+            const times = [];
+            if (post.passTime) times.push(`通: ${post.passTime}`);
+            if (post.arrTime) times.push(`着: ${post.arrTime}`);
+            if (post.depTime) times.push(`発: ${post.depTime}`);
+            return times.join(' / ');
+        }
+
+        // 時刻順ソート用比較キーを取得
+        function getSortTime(post) {
+            return post.passTime || post.arrTime || post.depTime || '';
+        }
+
+        // 運用履歴モーダル表示
+        function openOperationHistory(trainNum, isHoliday) {
             const modal = document.getElementById('historyModal');
             const title = document.getElementById('modalTitle');
             const timeline = document.getElementById('modalTimeline');
 
-            title.innerText = `列番: ${trainNum} の運用履歴`;
+            const dayLabel = isHoliday ? '休日ダイヤ' : '平日ダイヤ';
+            title.innerText = `列番: ${trainNum} (${dayLabel}) の運用履歴`;
 
             const matchingPosts = postsData
-                .filter(p => p.trainNum === trainNum)
-                .sort((a, b) => a.depTime.localeCompare(b.depTime));
+                .filter(p => p.trainNum === trainNum && p.isHoliday === isHoliday)
+                .sort((a, b) => getSortTime(a).localeCompare(getSortTime(b)));
 
             let timelineHTML = '';
             matchingPosts.forEach(post => {
+                const timeText = getTimeDisplayString(post);
                 timelineHTML += `
                     <div class="timeline-item">
-                        <div style="font-weight:bold; color:#d0021b;">${post.depTime} 発 - ${post.station}</div>
+                        <div style="font-weight:bold; color:#d0021b;">${timeText} - ${post.station}</div>
                         <div style="font-size:13px; color:#333; margin-top:2px;">
                             ${post.direction} | 編成: ${post.formation}
                         </div>
@@ -783,12 +1042,14 @@
 
         function createPostCardHTML(post) {
             const cardClass = post.isHoliday ? 'post-card holiday' : 'post-card weekday';
-            const sameCount = getTrainNumCount(post.trainNum);
+            const sameCount = getTrainNumCount(post.trainNum, post.isHoliday);
 
             let historyBtnHTML = '';
             if (sameCount >= 2) {
-                historyBtnHTML = `<button class="history-btn" onclick="openOperationHistory('${post.trainNum}')">運用履歴</button>`;
+                historyBtnHTML = `<button class="history-btn" onclick="openOperationHistory('${post.trainNum}', ${post.isHoliday})">運用履歴</button>`;
             }
+
+            const timeText = getTimeDisplayString(post);
 
             return `
                 <div class="${cardClass}">
@@ -796,7 +1057,7 @@
                         <span class="post-title">${post.station} ➔ ${post.direction}</span>
                         <div class="post-time-container">
                             ${historyBtnHTML}
-                            <span class="post-time">発車: ${post.depTime}</span>
+                            <span class="post-time">${timeText}</span>
                         </div>
                     </div>
                     <div class="post-details">
