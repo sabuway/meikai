@@ -364,23 +364,12 @@
     </header>
 
     <main>
-        <!-- 1. 最新情報画面（アプリのアップデートやお知らせ専用） -->
+        <!-- 1. 最新情報画面（アプリの運営・案内専用） -->
         <section id="latest-view" class="view-section active">
             <h2 style="font-size: 18px; color: #333;">最新のお知らせ</h2>
             <div class="info-card">
                 <div class="news-item">
-                    <div class="news-date">2026/08/13</div>
-                    <div class="news-title">システムアップデートのお知らせ</div>
-                    <div class="news-body">
-                        入力入力チェック制限機能を追加しました。<br>
-                        ・列番: 最大5文字まで<br>
-                        ・駅名・方面: 最大30文字まで<br>
-                        ・編成番号: 4桁数字限定<br>
-                        ・時刻: 正確な時刻のみ（24時台以降は自動補正）
-                    </div>
-                </div>
-                <div class="news-item">
-                    <div class="news-date">2026/08/10</div>
+                    <div class="news-date">8月13日</div>
                     <div class="news-title">「名鉄回送情報共有」公開</div>
                     <div class="news-body">
                         名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
@@ -395,31 +384,31 @@
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
                 <form id="postForm" onsubmit="handlePost(event)">
                     
-                    <!-- ① 列番（最大5文字） -->
+                    <!-- ① 列番（内部で最大5文字制限） -->
                     <div class="form-group">
-                        <label for="trainNumber">列番 <span class="optional-badge">任意・5文字まで</span></label>
+                        <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
                         <input type="text" id="trainNumber" class="form-control" placeholder="例: K2461" maxlength="5">
                     </div>
 
-                    <!-- ② 確認駅（最大30文字） -->
+                    <!-- ② 確認駅（内部で最大30文字制限） -->
                     <div class="form-group">
-                        <label for="station">確認駅 <span style="color:red;">*</span> <span class="optional-badge">30文字まで</span></label>
+                        <label for="station">確認駅 <span style="color:red;">*</span></label>
                         <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
                     </div>
 
-                    <!-- ③ 方面（最大30文字） -->
+                    <!-- ③ 方面（内部で最大30文字制限） -->
                     <div class="form-group">
-                        <label for="direction">方面 <span style="color:red;">*</span> <span class="optional-badge">30文字まで</span></label>
+                        <label for="direction">方面 <span style="color:red;">*</span></label>
                         <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
                     </div>
 
-                    <!-- ④ 編成番号（数字4桁限定） -->
+                    <!-- ④ 編成番号（内部で4桁限定） -->
                     <div class="form-group">
-                        <label for="formation">編成番号 <span style="color:red;">*</span> <span class="optional-badge">4桁数字</span></label>
+                        <label for="formation">編成番号 <span style="color:red;">*</span></label>
                         <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
                     </div>
 
-                    <!-- ⑤ 発車時刻（あり得る時間のみ） -->
+                    <!-- ⑤ 発車時刻 -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
                         <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 02:34 または 234" maxlength="5" onblur="finalizeTimeFormat(this)" required>
@@ -536,7 +525,7 @@
 
             const formationInput = document.getElementById('formation').value.trim();
             if (formationInput.length !== 4) {
-                alert('編成番号は必ず4桁の数字（例: 3501）で入力してください。');
+                alert('編成番号は4桁の数字で入力してください。');
                 return;
             }
 
