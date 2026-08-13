@@ -98,6 +98,20 @@
             min-height: 80px;
         }
 
+        /* 検索ボックス専用スタイル */
+        .search-box-card {
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            border-color: #ddd;
+            background-color: #fafafa;
+        }
+
         /* 送信ボタン */
         .submit-btn {
             width: 100%;
@@ -127,7 +141,7 @@
         }
 
         .post-title {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             color: #d0021b;
         }
@@ -236,25 +250,31 @@
                         <input type="text" id="trainNumber" class="form-control" inputmode="numeric" placeholder="例: K2461">
                     </div>
 
-                    <!-- ② 方面 (文字入力) -->
+                    <!-- ② 確認駅 (例: 須ヶ口) -->
+                    <div class="form-group">
+                        <label for="station">確認駅 <span style="color:red;">*</span></label>
+                        <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" required>
+                    </div>
+
+                    <!-- ③ 方面 (文字入力) -->
                     <div class="form-group">
                         <label for="direction">方面 <span style="color:red;">*</span></label>
                         <input type="text" id="direction" class="form-control" placeholder="例: 犬山" required>
                     </div>
 
-                    <!-- ③ 編成番号 (数字のみ) -->
+                    <!-- ④ 編成番号 (数字のみ) -->
                     <div class="form-group">
                         <label for="formation">編成番号 <span style="color:red;">*</span></label>
                         <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="例: 3501" oninput="onlyNumbers(this)" required>
                     </div>
 
-                    <!-- ④ 発車時刻 (3桁または4桁整形) -->
+                    <!-- ⑤ 発車時刻 (3桁または4桁整形) -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
                         <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 234 ➔ 02:34" maxlength="5" onblur="finalizeTimeFormat(this)" required>
                     </div>
 
-                    <!-- ⑤ 備考欄 -->
+                    <!-- ⑥ 備考欄 -->
                     <div class="form-group">
                         <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
                         <textarea id="remarks" class="form-control" placeholder="何でも入力できます（被り情報、試運転の有無など）"></textarea>
@@ -265,8 +285,13 @@
             </div>
         </section>
 
-        <!-- 3. 履歴画面 -->
+        <!-- 3. 履歴画面（最上部に検索バーを配置） -->
         <section id="history-view" class="view-section">
+            <!-- 🔍 検索用入力バー -->
+            <div class="search-box-card">
+                <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番・編成など)" oninput="filterHistory()">
+            </div>
+
             <h2 style="font-size: 18px; color: #333;">投稿履歴一覧</h2>
             <div id="history-list">
                 <p class="empty-msg">過去の投稿履歴はありません。</p>
@@ -279,7 +304,7 @@
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
-            <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
+            <button class="footer-btn" id="history-nav-btn" onclick="switchView('history-view', this)">履歴</button>
         </nav>
     </footer>
 
@@ -304,12 +329,11 @@
             input.value = input.value.replace(/[^0-9]/g, '');
         }
 
-        // 発車時刻フォーマット（フォーカスが外れた際・投稿時に確定）
+        // 発車時刻フォーマット
         function finalizeTimeFormat(input) {
             let raw = input.value.replace(/[^0-9]/g, '');
             if (!raw) return;
 
-            // 3桁（例: 234）の場合は頭に0を付けて4桁（0234）にする
             if (raw.length === 3) {
                 raw = '0' + raw;
             }
@@ -319,7 +343,6 @@
                 const minutes = raw.slice(2, 4);
                 input.value = `${hours}:${minutes}`;
             } else if (raw.length === 1 || raw.length === 2) {
-                // 1桁〜2桁の場合は「00:XX」または「0X:00」のような扱いとして補正
                 input.value = raw.padStart(2, '0') + ':00';
             }
         }
@@ -329,24 +352,26 @@
             event.preventDefault();
 
             const depTimeInput = document.getElementById('departureTime');
-            finalizeTimeFormat(depTimeInput); // 時刻の整形を確実に行う
+            finalizeTimeFormat(depTimeInput);
 
             const trainNum = document.getElementById('trainNumber').value || '指定なし';
+            const station = document.getElementById('station').value; // 確認駅
             const rawDirection = document.getElementById('direction').value;
             const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
             const formation = document.getElementById('formation').value;
             const depTime = depTimeInput.value;
             const remarks = document.getElementById('remarks').value || 'なし';
 
-            // 現在の日時を取得（投稿日時用）
+            // 現在の日時を取得
             const now = new Date();
             const postDateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             // 投稿オブジェクト作成
             const newPost = {
                 trainNum: trainNum,
+                station: station,
                 direction: directionFormatted,
-                formation: formation + 'F', // 例: 3501F
+                formation: formation + 'F',
                 depTime: depTime,
                 remarks: remarks,
                 postDate: postDateStr
@@ -358,47 +383,81 @@
             // 表示の更新
             renderPosts();
 
-            // フォームのリセットと画面遷移
+            // フォームのリセット
             document.getElementById('postForm').reset();
             alert('投稿が完了しました！');
-            switchView('latest-view', document.querySelectorAll('.footer-btn')[0]);
+
+            // 👈 投稿完了後に「履歴」画面に飛ぶように指定
+            const historyBtn = document.getElementById('history-nav-btn');
+            switchView('history-view', historyBtn);
         }
 
-        // 投稿一覧を描画する関数（最新情報・履歴の両方を更新）
+        // 投稿カード作成ヘルパー関数
+        function createPostCardHTML(post) {
+            return `
+                <div class="post-card">
+                    <div class="post-header">
+                        <span class="post-title">${post.station} ➔ ${post.direction}</span>
+                        <span class="post-time">発車: ${post.depTime}</span>
+                    </div>
+                    <div class="post-details">
+                        <div><strong>列番:</strong> ${post.trainNum}</div>
+                        <div><strong>編成:</strong> ${post.formation}</div>
+                    </div>
+                    <div class="post-remarks">
+                        <strong>備考:</strong> ${post.remarks}
+                    </div>
+                    <div style="font-size: 11px; color: #999; text-align: right; margin-top: 6px;">
+                        投稿日時: ${post.postDate}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 投稿一覧を描画する関数
         function renderPosts() {
             const latestContainer = document.getElementById('latest-list');
-            const historyContainer = document.getElementById('history-list');
-
+            
             if (postsData.length === 0) {
                 latestContainer.innerHTML = '<p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>';
+            } else {
+                let latestHtml = '';
+                postsData.forEach(post => {
+                    latestHtml += createPostCardHTML(post);
+                });
+                latestContainer.innerHTML = latestHtml;
+            }
+
+            // 履歴一覧の更新（検索フィルターも考慮）
+            filterHistory();
+        }
+
+        // 🔍 履歴のリアルタイム検索機能
+        function filterHistory() {
+            const historyContainer = document.getElementById('history-list');
+            const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            if (postsData.length === 0) {
                 historyContainer.innerHTML = '<p class="empty-msg">過去の投稿履歴はありません。</p>';
                 return;
             }
 
-            let html = '';
-            postsData.forEach(post => {
-                html += `
-                    <div class="post-card">
-                        <div class="post-header">
-                            <span class="post-title">${post.direction}</span>
-                            <span class="post-time">発車: ${post.depTime}</span>
-                        </div>
-                        <div class="post-details">
-                            <div><strong>列番:</strong> ${post.trainNum}</div>
-                            <div><strong>編成:</strong> ${post.formation}</div>
-                        </div>
-                        <div class="post-remarks">
-                            <strong>備考:</strong> ${post.remarks}
-                        </div>
-                        <div style="font-size: 11px; color: #999; text-align: right; margin-top: 6px;">
-                            投稿日時: ${post.postDate}
-                        </div>
-                    </div>
-                `;
+            // キーワードにヒットする投稿をフィルタリング
+            const filteredPosts = postsData.filter(post => {
+                const combinedText = `${post.station} ${post.direction} ${post.trainNum} ${post.formation} ${post.remarks}`.toLowerCase();
+                return combinedText.includes(keyword);
             });
 
-            latestContainer.innerHTML = html;
-            historyContainer.innerHTML = html;
+            if (filteredPosts.length === 0) {
+                historyContainer.innerHTML = '<p class="empty-msg">該当する履歴が見つかりませんでした。</p>';
+                return;
+            }
+
+            let historyHtml = '';
+            filteredPosts.forEach(post => {
+                historyHtml += createPostCardHTML(post);
+            });
+            historyContainer.innerHTML = historyHtml;
         }
     </script>
 </body>
