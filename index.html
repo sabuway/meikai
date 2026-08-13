@@ -48,12 +48,40 @@
         }
 
         /* フォーム・カードデザイン */
-        .form-card {
+        .form-card, .info-card {
             background: #ffffff;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             margin-bottom: 15px;
+        }
+
+        /* お知らせカード */
+        .news-item {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .news-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        .news-date {
+            font-size: 12px;
+            color: #d0021b;
+            font-weight: bold;
+        }
+        .news-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            margin: 4px 0;
+        }
+        .news-body {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
         }
 
         /* 投稿カード (平日:白 / 休日:薄ピンク) */
@@ -336,11 +364,28 @@
     </header>
 
     <main>
-        <!-- 1. 最新情報画面 (直近の最新投稿のみ表示) -->
+        <!-- 1. 最新情報画面（アプリのアップデートやお知らせ専用） -->
         <section id="latest-view" class="view-section active">
-            <h2 style="font-size: 18px; color: #333;">最新の目撃情報</h2>
-            <div id="latest-list">
-                <p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>
+            <h2 style="font-size: 18px; color: #333;">最新のお知らせ</h2>
+            <div class="info-card">
+                <div class="news-item">
+                    <div class="news-date">2026/08/13</div>
+                    <div class="news-title">システムアップデートのお知らせ</div>
+                    <div class="news-body">
+                        入力入力チェック制限機能を追加しました。<br>
+                        ・列番: 最大5文字まで<br>
+                        ・駅名・方面: 最大30文字まで<br>
+                        ・編成番号: 4桁数字限定<br>
+                        ・時刻: 正確な時刻のみ（24時台以降は自動補正）
+                    </div>
+                </div>
+                <div class="news-item">
+                    <div class="news-date">2026/08/10</div>
+                    <div class="news-title">「名鉄回送情報共有」公開</div>
+                    <div class="news-body">
+                        名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -349,36 +394,49 @@
             <div class="form-card">
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
                 <form id="postForm" onsubmit="handlePost(event)">
+                    
+                    <!-- ① 列番（最大5文字） -->
                     <div class="form-group">
-                        <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="trainNumber" class="form-control" placeholder="例: K2461">
+                        <label for="trainNumber">列番 <span class="optional-badge">任意・5文字まで</span></label>
+                        <input type="text" id="trainNumber" class="form-control" placeholder="例: K2461" maxlength="5">
                     </div>
+
+                    <!-- ② 確認駅（最大30文字） -->
                     <div class="form-group">
-                        <label for="station">確認駅 <span style="color:red;">*</span></label>
-                        <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" required>
+                        <label for="station">確認駅 <span style="color:red;">*</span> <span class="optional-badge">30文字まで</span></label>
+                        <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
                     </div>
+
+                    <!-- ③ 方面（最大30文字） -->
                     <div class="form-group">
-                        <label for="direction">方面 <span style="color:red;">*</span></label>
-                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" required>
+                        <label for="direction">方面 <span style="color:red;">*</span> <span class="optional-badge">30文字まで</span></label>
+                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
                     </div>
+
+                    <!-- ④ 編成番号（数字4桁限定） -->
                     <div class="form-group">
-                        <label for="formation">編成番号 <span style="color:red;">*</span></label>
-                        <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="例: 3501" oninput="onlyNumbers(this)" required>
+                        <label for="formation">編成番号 <span style="color:red;">*</span> <span class="optional-badge">4桁数字</span></label>
+                        <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
                     </div>
+
+                    <!-- ⑤ 発車時刻（あり得る時間のみ） -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 234 ➔ 02:34" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 02:34 または 234" maxlength="5" onblur="finalizeTimeFormat(this)" required>
                     </div>
+
+                    <!-- ⑥ 備考欄 -->
                     <div class="form-group">
                         <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
                         <textarea id="remarks" class="form-control" placeholder="備考情報"></textarea>
                     </div>
+
                     <button type="submit" class="submit-btn">投稿する</button>
                 </form>
             </div>
         </section>
 
-        <!-- 3. 履歴画面 (全履歴・検索・条件フィルターはこちらで表示) -->
+        <!-- 3. 履歴画面 (全投稿・検索はこちら) -->
         <section id="history-view" class="view-section">
             <div class="search-box-card">
                 <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番など)" oninput="filterHistory()">
@@ -428,31 +486,69 @@
             btnElement.classList.add('active');
         }
 
+        // 数字のみ制限
         function onlyNumbers(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
 
+        // 時刻の厳格チェックと24時以降（24時→00時 / 25時→01時）補正関数
         function finalizeTimeFormat(input) {
             let raw = input.value.replace(/[^0-9]/g, '');
             if (!raw) return;
-            if (raw.length === 3) raw = '0' + raw;
-            if (raw.length === 4) {
-                input.value = `${raw.slice(0, 2)}:${raw.slice(2, 4)}`;
+
+            let h = 0;
+            let m = 0;
+
+            if (raw.length === 3) {
+                h = parseInt(raw.slice(0, 1), 10);
+                m = parseInt(raw.slice(1, 3), 10);
+            } else if (raw.length === 4) {
+                h = parseInt(raw.slice(0, 2), 10);
+                m = parseInt(raw.slice(2, 4), 10);
             } else if (raw.length <= 2) {
-                input.value = raw.padStart(2, '0') + ':00';
+                h = parseInt(raw, 10);
+                m = 0;
+            } else {
+                alert('時刻は「02:30」や「230」のように正しい形式で入力してください。');
+                input.value = '';
+                return;
             }
+
+            // 分の妥当性チェック
+            if (m < 0 || m > 59) {
+                alert('分は00～59の間で入力してください。');
+                input.value = '';
+                return;
+            }
+
+            // 24時以降は翌日の時間（24時→00時, 25時→01時など）に変換
+            if (h >= 24) {
+                h = h % 24;
+            }
+
+            const formattedH = String(h).padStart(2, '0');
+            const formattedM = String(m).padStart(2, '0');
+            input.value = `${formattedH}:${formattedM}`;
         }
 
         function handlePost(event) {
             event.preventDefault();
+
+            const formationInput = document.getElementById('formation').value.trim();
+            if (formationInput.length !== 4) {
+                alert('編成番号は必ず4桁の数字（例: 3501）で入力してください。');
+                return;
+            }
+
             const depTimeInput = document.getElementById('departureTime');
             finalizeTimeFormat(depTimeInput);
+            if (!depTimeInput.value) return;
 
             const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
             const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
-            const formation = document.getElementById('formation').value.trim();
+            const formation = formationInput;
             const depTime = depTimeInput.value;
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
@@ -475,11 +571,11 @@
             };
 
             postsData.unshift(newPost);
-            renderPosts();
+            filterHistory();
 
             document.getElementById('postForm').reset();
             alert('投稿が完了しました！');
-            switchView('latest-view', document.querySelectorAll('.footer-btn')[0]);
+            switchView('history-view', document.getElementById('history-nav-btn'));
         }
 
         function getTrainNumCount(trainNum) {
@@ -557,21 +653,6 @@
             currentFilter = filterType;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
-            filterHistory();
-        }
-
-        function renderPosts() {
-            const latestContainer = document.getElementById('latest-list');
-            if (postsData.length === 0) {
-                latestContainer.innerHTML = '<p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>';
-            } else {
-                let latestHtml = '';
-                // 「最新情報」画面には直近の数件のみを表示
-                postsData.slice(0, 5).forEach(post => {
-                    latestHtml += createPostCardHTML(post);
-                });
-                latestContainer.innerHTML = latestHtml;
-            }
             filterHistory();
         }
 
