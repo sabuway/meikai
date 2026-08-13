@@ -47,12 +47,13 @@
             display: block;
         }
 
-        /* フォームのデザイン */
-        .form-card {
+        /* フォーム・カードのデザイン */
+        .form-card, .post-card {
             background: #ffffff;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
         }
 
         .form-group {
@@ -80,7 +81,7 @@
         .form-control {
             width: 100%;
             padding: 12px;
-            font-size: 16px; /* スマホで自動ズームしないサイズ */
+            font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
@@ -113,6 +114,52 @@
 
         .submit-btn:active {
             opacity: 0.8;
+        }
+
+        /* 投稿表示カードのデザイン */
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #d0021b;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d0021b;
+        }
+
+        .post-time {
+            font-size: 14px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .post-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .post-remarks {
+            background-color: #f9f9f9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #888;
+            padding: 30px 0;
         }
 
         /* フッター固定ナビ */
@@ -171,20 +218,22 @@
     <main>
         <!-- 1. 最新情報画面 -->
         <section id="latest-view" class="view-section active">
-            <h2>最新情報</h2>
-            <p>ここに投稿された情報が一覧表示されます。</p>
+            <h2 style="font-size: 18px; color: #333;">最新の目撃情報</h2>
+            <div id="latest-list">
+                <p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>
+            </div>
         </section>
 
-        <!-- 2. 投稿欄画面（今回作成部分） -->
+        <!-- 2. 投稿欄画面 -->
         <section id="post-view" class="view-section">
             <div class="form-card">
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
                 <form id="postForm" onsubmit="handlePost(event)">
                     
-                    <!-- ① 列番 (任意 / 数字キーボード) -->
+                    <!-- ① 列番 (例: K2461) -->
                     <div class="form-group">
                         <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="trainNumber" class="form-control" inputmode="numeric" placeholder="例: 9004">
+                        <input type="text" id="trainNumber" class="form-control" inputmode="numeric" placeholder="例: K2461">
                     </div>
 
                     <!-- ② 方面 (文字入力) -->
@@ -193,19 +242,19 @@
                         <input type="text" id="direction" class="form-control" placeholder="例: 犬山" required>
                     </div>
 
-                    <!-- ③ 編成番号 (数字のみ / 数字キーボード) -->
+                    <!-- ③ 編成番号 (数字のみ) -->
                     <div class="form-group">
                         <label for="formation">編成番号 <span style="color:red;">*</span></label>
                         <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="例: 3501" oninput="onlyNumbers(this)" required>
                     </div>
 
-                    <!-- ④ 発車時刻 (最大4桁数字 / 自動コロン整形) -->
+                    <!-- ④ 発車時刻 (3桁または4桁整形) -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span style="color:red;">*</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 0915 ➔ 09:15" maxlength="5" oninput="formatTimeInput(this)" required>
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 234 ➔ 02:34" maxlength="5" onblur="finalizeTimeFormat(this)" required>
                     </div>
 
-                    <!-- ⑤ 備考欄 (何でも入力可能) -->
+                    <!-- ⑤ 備考欄 -->
                     <div class="form-group">
                         <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
                         <textarea id="remarks" class="form-control" placeholder="何でも入力できます（被り情報、試運転の有無など）"></textarea>
@@ -218,8 +267,10 @@
 
         <!-- 3. 履歴画面 -->
         <section id="history-view" class="view-section">
-            <h2>履歴</h2>
-            <p>過去に投稿された履歴がここに表示されます。</p>
+            <h2 style="font-size: 18px; color: #333;">投稿履歴一覧</h2>
+            <div id="history-list">
+                <p class="empty-msg">過去の投稿履歴はありません。</p>
+            </div>
         </section>
     </main>
 
@@ -233,73 +284,121 @@
     </footer>
 
     <script>
-        // 画面切り替えの処理
+        // 投稿データを保持する配列
+        const postsData = [];
+
+        // 画面切り替え処理
         function switchView(viewId, btnElement) {
-            // すべての画面を非表示にする
             const views = document.querySelectorAll('.view-section');
             views.forEach(v => v.classList.remove('active'));
 
-            // すべてのボタンの選択状態を解除
             const buttons = document.querySelectorAll('.footer-btn');
             buttons.forEach(b => b.classList.remove('active'));
 
-            // 指定された画面とボタンをアクティブにする
             document.getElementById(viewId).classList.add('active');
             btnElement.classList.add('active');
         }
 
-        // 数字のみ入力制限（編成番号用）
+        // 数字のみ制限（編成番号用）
         function onlyNumbers(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
 
-        // 発車時刻の自動整形（数字のみ4桁で 09:15 などの時計表記へ）
-        function formatTimeInput(input) {
-            // 数字以外を削除
+        // 発車時刻フォーマット（フォーカスが外れた際・投稿時に確定）
+        function finalizeTimeFormat(input) {
             let raw = input.value.replace(/[^0-9]/g, '');
-            
-            // 最大4桁に制限
-            if (raw.length > 4) {
-                raw = raw.slice(0, 4);
+            if (!raw) return;
+
+            // 3桁（例: 234）の場合は頭に0を付けて4桁（0234）にする
+            if (raw.length === 3) {
+                raw = '0' + raw;
             }
 
-            // 桁数に応じた整形処理
-            if (raw.length <= 2) {
-                input.value = raw;
-            } else {
-                // 3桁または4桁のときは「2桁 : 残り」の形式に整形
+            if (raw.length === 4) {
                 const hours = raw.slice(0, 2);
-                const minutes = raw.slice(2);
-                input.value = hours + ':' + minutes;
+                const minutes = raw.slice(2, 4);
+                input.value = `${hours}:${minutes}`;
+            } else if (raw.length === 1 || raw.length === 2) {
+                // 1桁〜2桁の場合は「00:XX」または「0X:00」のような扱いとして補正
+                input.value = raw.padStart(2, '0') + ':00';
             }
         }
 
-        // 投稿の処理（テスト動作確認用）
+        // 投稿処理
         function handlePost(event) {
             event.preventDefault();
 
-            // 各入力値の取得
+            const depTimeInput = document.getElementById('departureTime');
+            finalizeTimeFormat(depTimeInput); // 時刻の整形を確実に行う
+
             const trainNum = document.getElementById('trainNumber').value || '指定なし';
             const rawDirection = document.getElementById('direction').value;
-            // 指定通り「(方面)」を後ろに付与
-            const directionFormatted = rawDirection + '（方面）';
+            const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
             const formation = document.getElementById('formation').value;
-            const depTime = document.getElementById('departureTime').value;
+            const depTime = depTimeInput.value;
             const remarks = document.getElementById('remarks').value || 'なし';
 
-            // 投稿内容の確認アラート
-            alert(
-                `【投稿完了テスト】\n` +
-                `・列番: ${trainNum}\n` +
-                `・方面: ${directionFormatted}\n` +
-                `・編成番号: ${formation}\n` +
-                `・発車時刻: ${depTime}\n` +
-                `・備考: ${remarks}`
-            );
+            // 現在の日時を取得（投稿日時用）
+            const now = new Date();
+            const postDateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            // フォームをリセットして最新情報画面に戻る
+            // 投稿オブジェクト作成
+            const newPost = {
+                trainNum: trainNum,
+                direction: directionFormatted,
+                formation: formation + 'F', // 例: 3501F
+                depTime: depTime,
+                remarks: remarks,
+                postDate: postDateStr
+            };
+
+            // 先頭に新しい投稿を追加
+            postsData.unshift(newPost);
+
+            // 表示の更新
+            renderPosts();
+
+            // フォームのリセットと画面遷移
             document.getElementById('postForm').reset();
+            alert('投稿が完了しました！');
             switchView('latest-view', document.querySelectorAll('.footer-btn')[0]);
+        }
+
+        // 投稿一覧を描画する関数（最新情報・履歴の両方を更新）
+        function renderPosts() {
+            const latestContainer = document.getElementById('latest-list');
+            const historyContainer = document.getElementById('history-list');
+
+            if (postsData.length === 0) {
+                latestContainer.innerHTML = '<p class="empty-msg">まだ投稿がありません。「投稿欄」から情報を追加してください。</p>';
+                historyContainer.innerHTML = '<p class="empty-msg">過去の投稿履歴はありません。</p>';
+                return;
+            }
+
+            let html = '';
+            postsData.forEach(post => {
+                html += `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <span class="post-title">${post.direction}</span>
+                            <span class="post-time">発車: ${post.depTime}</span>
+                        </div>
+                        <div class="post-details">
+                            <div><strong>列番:</strong> ${post.trainNum}</div>
+                            <div><strong>編成:</strong> ${post.formation}</div>
+                        </div>
+                        <div class="post-remarks">
+                            <strong>備考:</strong> ${post.remarks}
+                        </div>
+                        <div style="font-size: 11px; color: #999; text-align: right; margin-top: 6px;">
+                            投稿日時: ${post.postDate}
+                        </div>
+                    </div>
+                `;
+            });
+
+            latestContainer.innerHTML = html;
+            historyContainer.innerHTML = html;
         }
     </script>
 </body>
