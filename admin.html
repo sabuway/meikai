@@ -29,12 +29,16 @@
     </table>
 
     <script>
-        // パスワード認証（失敗時は外部サイトへ飛ばして通常サイトを隠す）
+        // 【重要】セッションを強制リセットしてテストしたい場合は一時的にコメントアウトを外せます
+        // sessionStorage.removeItem("adminAuth");
+
+        // パスワード認証チェック
         if (sessionStorage.getItem("adminAuth") !== "true") {
             const pass = prompt("管理者パスワードを入力してください");
-            if (pass !== "admin123") { // ここがパスワードです
+            if (pass !== "admin123") { // パスワード
                 alert("パスワードが違います");
-                window.location.href = "https://www.meitetsu.co.jp/"; // 通常サイトに飛ばさない設定
+                // 本番サイトには絶対飛ばさず、名鉄公式サイト等に飛ばす（または真っ白にする）
+                window.location.href = "https://www.meitetsu.co.jp/";
             } else {
                 sessionStorage.setItem("adminAuth", "true");
             }
@@ -66,7 +70,6 @@
             });
         });
 
-.deletePost(id) { // 修正用プレースホルダー
         function deletePost(id) {
             if (confirm('本当に削除しますか？')) {
                 db.collection("posts").doc(id).delete();
