@@ -985,7 +985,6 @@
                 document.getElementById('userNameInput').value = '';
             }
 
-            // 画面読み込み時に1週間以内の制限判定を行う
             if (lastUpdatedTime) {
                 const now = new Date().getTime();
                 const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
@@ -1028,7 +1027,6 @@
                 }
             }
 
-            // 重複チェック（他の人がすでに同じ名前を使っていないか確認）
             try {
                 const querySnapshot = await db.collection("users").where("name", "==", newName).get();
                 if (!querySnapshot.empty) {
@@ -1044,7 +1042,6 @@
                     }
                 }
 
-                // ユーザーIDの管理（未作成なら発行）
                 let userId = localStorage.getItem('meitetsu_user_id');
                 if (!userId) {
                     userId = db.collection("users").doc().id;
@@ -1065,7 +1062,6 @@
                 localStorage.setItem('meitetsu_name_updated_at', new Date().getTime().toString());
             }
 
-            // 保存成功時にボタンを無効化しスタイル・文言を変更
             saveBtn.disabled = true;
             saveBtn.innerText = "変更済み";
 
@@ -1449,7 +1445,7 @@
                 }
             }
 
-            // 余分なサフィックスがあれば一度削る
+            // 余分なサフィックスを綺麗に取り除く
             let cleanDir = rawDir.replace(/（行き）|（方面）|行|方面/g, '').trim();
             if (!cleanDir) cleanDir = rawDir;
 
