@@ -112,13 +112,13 @@
             color: #333;
         }
 
-        /* 平日/休日 ダイヤ選択ボタングループ */
-        .schedule-btn-group {
+        /* ボタン群共通（ダイヤ・方面行先選択など） */
+        .schedule-btn-group, .direction-btn-group {
             display: flex;
             gap: 10px;
         }
 
-        .schedule-btn {
+        .schedule-btn, .direction-type-btn {
             flex: 1;
             padding: 12px 0;
             font-size: 14px;
@@ -132,7 +132,7 @@
             transition: all 0.2s;
         }
 
-        .schedule-btn.active {
+        .schedule-btn.active, .direction-type-btn.active {
             background-color: #d0021b;
             color: #ffffff;
             border-color: #d0021b;
@@ -630,16 +630,14 @@
                         <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
                     </div>
 
-                    <!-- 方面・行先の選択と入力 -->
+                    <!-- 方面・行先の選択ボタンと入力 -->
                     <div class="form-group">
-                        <label for="direction">方向種別 & 方面・行先 <span style="color:red;">*</span></label>
-                        <div style="display: flex; gap: 8px;">
-                            <select id="directionType" class="form-control" style="width: 110px;">
-                                <option value="方面">方面</option>
-                                <option value="行先">行先</option>
-                            </select>
-                            <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
+                        <label>方面 / 行先 <span style="color:red;">*</span></label>
+                        <div class="direction-btn-group" style="margin-bottom: 8px;">
+                            <button type="button" class="direction-type-btn" id="btn-dir-houmen" onclick="selectDirectionType('方面')">方面</button>
+                            <button type="button" class="direction-type-btn" id="btn-dir-yukisaki" onclick="selectDirectionType('行先')">行先</button>
                         </div>
+                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
                     </div>
 
                     <!-- 編成番号 & 併結オプション -->
@@ -754,10 +752,6 @@
             </div>
             
             <div class="form-card">
-                <div id="accountNoDisplay" style="font-size: 13px; color: #d0021b; font-weight: bold; margin-bottom: 15px;">
-                    アカウント番号: 読み込み中...
-                </div>
-
                 <h3 style="margin-top:0; font-size:16px; color:#333;">アプリ内ユーザー名</h3>
                 <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
                     投稿時などに表示される名前を設定します。
@@ -813,24 +807,17 @@
         let currentFilter = 'all';
         let currentSyoteiDay = 'weekday';
         let selectedPostSchedule = null;
+        let selectedDirectionType = null; // デフォルト未選択
 
         let isCouplingActive = false;
         let couplingCount = 2; 
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
-            initUserAccountInfo();
+            initUserName();
         });
 
-        // アカウント番号と名前の初期化
-        function initUserAccountInfo() {
-            let accountNo = localStorage.getItem('meitetsu_account_no');
-            if (!accountNo) {
-                accountNo = 'No.' + Math.floor(1000 + Math.random() * 9000);
-                localStorage.setItem('meitetsu_account_no', accountNo);
-            }
-            document.getElementById('accountNoDisplay').innerText = `アカウント作成番号: ${accountNo}`;
-
+        function initUserName() {
             const savedName = localStorage.getItem('meitetsu_user_name');
             if (savedName) {
                 document.getElementById('userNameInput').value = savedName;
@@ -895,9 +882,20 @@
             } else if (scheduleType === 'holiday') {
                 btnHoliday.classList.add('active');
                 btnWeekday.classList.remove('active');
-            } else {
-                btnWeekday.classList.remove('active');
-                btnHoliday.classList.remove('active');
+            }
+        }
+
+        function selectDirectionType(type) {
+            selectedDirectionType = type;
+            const btnHoumen = document.getElementById('btn-dir-houmen');
+            const btnYukisaki = document.getElementById('btn-dir-yukisaki');
+
+            if (type === '方面') {
+                btnHoumen.classList.add('active');
+                btnYukisaki.classList.remove('active');
+            } else if (type === '行先') {
+                btnYukisaki.classList.add('active');
+                btnHoumen.classList.remove('active');
             }
         }
 
@@ -1020,6 +1018,11 @@
                 return;
             }
 
+            if (!selectedDirectionType) {
+                alert('【エラー】「方面」または「行先」のいずれかを選択してください。');
+                return;
+            }
+
             let formationFormatted = '';
             if (!isCouplingActive) {
                 const formationInput = document.getElementById('formation').value.trim();
@@ -1073,11 +1076,10 @@
 
             const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
             const station = document.getElementById('station').value.trim();
-            const directionType = document.getElementById('directionType').value; // 「方面」または「行先」
             const rawDirection = document.getElementById('direction').value.trim();
             
             // 選択された種別（方面または行先）を付与
-            const directionFormatted = rawDirection.endsWith(directionType) ? rawDirection : `${rawDirection}${directionType}`;
+            const directionFormatted = rawDirection.endsWith(selectedDirectionType) ? rawDirection : `${rawDirection}（${selectedDirectionType}）`;
             
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
             const authorName = localStorage.getItem('meitetsu_user_name') || '名鉄ファン';
@@ -1111,6 +1113,9 @@
                     toggleCoupling();
                 }
                 selectPostSchedule(null);
+                selectedDirectionType = null;
+                document.getElementById('btn-dir-houmen').classList.remove('active');
+                document.getElementById('btn-dir-yukisaki').classList.remove('active');
 
                 alert('投稿が完了しました！');
                 switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
