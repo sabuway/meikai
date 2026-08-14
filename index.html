@@ -598,7 +598,7 @@
             <h2 style="font-size: 18px; color: #333;">最新のお知らせ</h2>
             <div class="info-card">
                 <div class="news-item">
-                    <div class="news-date">8月13日</div>
+                    <div class="news-date">8月14日</div>
                     <div class="news-title">「名鉄回送情報共有」公開</div>
                     <div class="news-body">
                         名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
@@ -613,7 +613,7 @@
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
                 <form id="postForm" onsubmit="handlePost(event)">
 
-                    <!-- 平日/休日 ダイヤ選択 (初期状態: 未選択) -->
+                    <!-- 平日/休日 ダイヤ選択 -->
                     <div class="form-group">
                         <label>ダイヤ種別 <span style="color:red;">*</span></label>
                         <div class="schedule-btn-group">
@@ -642,22 +642,18 @@
                         <label for="formation">編成番号 <span style="color:red;">*</span></label>
                         <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
                         
-                        <!-- 右下に設置されたオプションボタン -->
                         <div class="coupling-option-container">
                             <span class="coupling-desc">併結有</span>
                             <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
                         </div>
 
-                        <!-- 併結時入力欄エリア（ト方/キ方ガイド・緑/赤ボタン付き） -->
                         <div id="couplingInputsArea" class="coupling-inputs-area">
                             <div class="coupling-guide-header">
                                 <span>ト方</span>
                                 <span>キ方</span>
                             </div>
                             <div class="coupling-row-wrapper">
-                                <div id="couplingInputsList" class="coupling-row-horizontal">
-                                    <!-- JSで動的生成 -->
-                                </div>
+                                <div id="couplingInputsList" class="coupling-row-horizontal"></div>
                                 <div class="coupling-actions">
                                     <button type="button" class="coupling-action-btn btn-add-green" onclick="addCouplingField()">＋</button>
                                     <button type="button" class="coupling-action-btn btn-remove-red" onclick="removeCouplingField()">－</button>
@@ -666,22 +662,18 @@
                         </div>
                     </div>
 
-                    <!-- 時刻入力条件注記 -->
                     <p class="time-condition-note">※ 通過・到着・発車のうち少なくとも1つの入力が必要です</p>
 
-                    <!-- 通過時間 (上段) -->
                     <div class="form-group">
                         <label for="passingTime">通過時刻 <span class="optional-badge">任意</span></label>
                         <input type="text" id="passingTime" class="form-control" inputmode="numeric" placeholder="例: 123 (➔ 01:23)" maxlength="5" onblur="finalizeTimeFormat(this)">
                     </div>
 
-                    <!-- 到着時間 (中段) -->
                     <div class="form-group">
                         <label for="arrivalTime">到着時刻 <span class="optional-badge">任意</span></label>
                         <input type="text" id="arrivalTime" class="form-control" inputmode="numeric" placeholder="例: 456 (➔ 04:56)" maxlength="5" onblur="finalizeTimeFormat(this)">
                     </div>
 
-                    <!-- 発車時間 (下段) -->
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
                         <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 789 (➔ 07:89)" maxlength="5" onblur="finalizeTimeFormat(this)">
@@ -697,7 +689,7 @@
             </div>
         </section>
 
-        <!-- 3. 履歴画面 (全投稿・検索) -->
+        <!-- 3. 履歴画面 -->
         <section id="history-view" class="view-section">
             <div class="search-box-card">
                 <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番など)" oninput="filterHistory()">
@@ -724,13 +716,11 @@
                 <h2>回送所定一覧</h2>
             </div>
 
-            <!-- 平日 / 休日 切替タブ -->
             <div class="syotei-tab-container">
                 <button class="syotei-tab-btn active" onclick="selectSyoteiDay('weekday', this)">平日所定</button>
                 <button class="syotei-tab-btn" onclick="selectSyoteiDay('holiday', this)">休日所定</button>
             </div>
 
-            <!-- 所定形式・路線一覧ボタン -->
             <div class="syotei-grid">
                 <button class="syotei-btn" onclick="openSyoteiDetail('B2')">B2</button>
                 <button class="syotei-btn" onclick="openSyoteiDetail('1800')">1800</button>
@@ -753,7 +743,7 @@
         </section>
     </main>
 
-    <!-- 運用履歴モーダル (ポップアップ) -->
+    <!-- 運用履歴モーダル -->
     <div id="historyModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -775,7 +765,6 @@
     </footer>
 
     <script>
-        // --- Firebase 初期設定 ---
         const firebaseConfig = {
             apiKey: "AIzaSyCn4NARVzzkW1P-BcCvbHiW30KmPGkol3M",
             authDomain: "meitetsu-kaisou-app.firebaseapp.com",
@@ -793,16 +782,13 @@
         let currentSyoteiDay = 'weekday';
         let selectedPostSchedule = null;
 
-        // 併結管理用変数 (最小2, 最大4)
         let isCouplingActive = false;
         let couplingCount = 2; 
 
-        // ページ読み込み時にFirestoreからデータを取得開始
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
         });
 
-        // Firestoreからデータをリアルタイムで取得する関数
         function fetchPostsFromFirestore() {
             db.collection("posts")
               .orderBy("timestamp", "desc")
@@ -810,7 +796,7 @@
                   postsData = [];
                   snapshot.forEach((doc) => {
                       const data = doc.data();
-                      data.id = doc.id; // FirestoreのドキュメントIDを保持
+                      data.id = doc.id;
                       postsData.push(data);
                   });
                   filterHistory();
@@ -857,7 +843,6 @@
                 toggleBtn.classList.add('active');
                 formationInput.disabled = true;
                 formationInput.removeAttribute('required');
-                formationInput.value = '';
                 couplingArea.classList.add('active');
                 couplingCount = 2; 
                 renderCouplingFields();
@@ -954,20 +939,22 @@
             input.value = `${formattedH}:${formattedM}`;
         }
 
-        // 投稿処理（Firestoreへ保存）
+        // 投稿処理（エラー検出・入力内容保持・完了通知対応）
         async function handlePost(event) {
             event.preventDefault();
 
+            // エラー検出1：ダイヤ種別
             if (!selectedPostSchedule) {
-                alert('ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
+                alert('【エラー】ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
                 return;
             }
 
             let formationFormatted = '';
             if (!isCouplingActive) {
                 const formationInput = document.getElementById('formation').value.trim();
+                // エラー検出2：単行編成の桁数
                 if (formationInput.length !== 4) {
-                    alert('編成番号は4桁の数字で入力してください。');
+                    alert('【エラー】編成番号は4桁の数字で入力してください。');
                     return;
                 }
                 formationFormatted = 'ト' + formationInput + 'Fキ';
@@ -978,12 +965,14 @@
 
                 for (let field of fields) {
                     const val = field.value.trim();
-                    if (!val || (val.length !== 3 && val.length !== 4)) {
-                        alert('警告、編成の入力欄に正しい編成番号を入力してください。');
+                    // エラー検出3：併結欄の空欄や桁数
+                    if (!val || val.length !== 4) {
+                        alert('【エラー】併結の編成入力欄に4桁の数字を正しく入力してください。');
                         return;
                     }
+                    // エラー検出4：重複チェック
                     if (seenVals.has(val)) {
-                        alert('警告、編成の入力欄に同じ編成番号を検知しました。');
+                        alert('【エラー】併結の入力欄に同じ編成番号が重複しています。');
                         return;
                     }
                     seenVals.add(val);
@@ -991,7 +980,7 @@
                 }
 
                 if (validVals.length < 2) {
-                    alert('併結有の場合は、最低2つの編成番号を入力してください。');
+                    alert('【エラー】併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
                 }
                 formationFormatted = 'ト' + validVals.join('+') + 'キ';
@@ -1009,8 +998,9 @@
             const arrTime = arrInput.value;
             const depTime = depInput.value;
 
+            // エラー検出5：時刻の未入力
             if (!passTime && !arrTime && !depTime) {
-                alert('「通過時刻」「到着時刻」「発車時刻」のうち、少なくとも1つを入力してください。');
+                alert('【エラー】「通過時刻」「到着時刻」「発車時刻」のうち、少なくとも1つを入力してください。');
                 return;
             }
 
@@ -1037,23 +1027,28 @@
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
                 rawDate: dateStr,
                 isHoliday: isHoliday,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp() // サーバー側での正確な並び替え用
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
-                // Firestoreの "posts" コレクションに追加
+                // Firestoreへ保存
                 await db.collection("posts").add(newPost);
 
+                // 成功時のみフォームをリセット
                 document.getElementById('postForm').reset();
                 if (isCouplingActive) {
                     toggleCoupling();
                 }
                 selectPostSchedule(null);
-                alert('投稿が完了し、データベースに保存されました！');
+
+                // 完了通知
+                alert('投稿が完了しました！');
+                
+                // 履歴画面へ自動移動
                 switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
             } catch (error) {
                 console.error("投稿エラー: ", error);
-                alert('投稿の保存に失敗しました。もう一度お試しください。');
+                alert('【エラー】データベースへの保存に失敗しました。インターネット接続やFirebaseのセキュリティルールを確認してください。');
             }
         }
 
