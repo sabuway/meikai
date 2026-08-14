@@ -269,6 +269,19 @@
         document.getElementById('timetableForm').addEventListener('submit', (e) => {
             e.preventDefault();
             alert("所定データを登録しました（データベース連携可能）");
+            // 管理画面での投稿削除処理
+async function deletePost(docId) {
+    if (!confirm('この投稿を削除してもよろしいですか？')) return;
+
+    try {
+        await db.collection("posts").doc(docId).delete();
+        alert('投稿を削除しました。');
+        // onSnapshotを使用していれば自動的に画面が更新されます
+    } catch (error) {
+        console.error("削除エラー: ", error);
+        alert('削除に失敗しました。');
+    }
+}
         });
     </script>
 </body>
