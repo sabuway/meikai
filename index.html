@@ -538,7 +538,7 @@
             border-radius: 50%;
         }
 
-        /* フッター固定ナビ (5項目に変更) */
+        /* フッター固定ナビ (5項目) */
         footer {
             position: fixed;
             bottom: 0;
@@ -584,6 +584,7 @@
 
     <!-- Firebase SDKの読み込み (Compat版) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
@@ -742,22 +743,44 @@
             </div>
         </section>
 
-        <!-- 5. アカウント設定画面 (新規追加) -->
+        <!-- 5. アカウント設定画面 (Google認証 + ユーザー名制限対応) -->
         <section id="account-view" class="view-section">
             <div class="section-header">
                 <h2>アカウント設定</h2>
             </div>
-            <div class="form-card">
-                <h3 style="margin-top:0; font-size:16px; color:#333;">アカウント作成 / ログイン</h3>
-                <div class="form-group">
-                    <label for="accountName">ユーザー名</label>
-                    <input type="text" id="accountName" class="form-control" placeholder="例: 名鉄太郎">
+            
+            <!-- 未ログイン時 -->
+            <div id="auth-logged-out" class="form-card" style="text-align: center;">
+                <h3 style="margin-top:0; font-size:16px; color:#333;">Googleアカウントでログイン</h3>
+                <p style="font-size: 13px; color: #666; margin-bottom: 20px;">
+                    Googleアカウントを使用して、簡単にサインイン・アカウント作成が行えます。
+                </p>
+                <button type="button" class="submit-btn" style="background-color: #4285F4;" onclick="loginWithGoogle()">
+                    Googleアカウントでログイン
+                </button>
+            </div>
+
+            <!-- ログイン中 -->
+            <div id="auth-logged-in" class="form-card" style="display: none;">
+                <h3 style="margin-top:0; font-size:16px; color:#333;">アカウント情報</h3>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <img id="userAvatar" src="" alt="プロフィール画像" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; display: none;">
+                    <div>
+                        <div id="userEmail" style="font-size: 13px; color: #666;">-</div>
+                        <div id="userAccountNo" style="font-size: 12px; color: #d0021b; font-weight: bold; margin-top: 2px;">-</div>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="accountEmail">メールアドレス</label>
-                    <input type="email" id="accountEmail" class="form-control" placeholder="例: example@email.com">
+                    <label for="userNameInput">アプリ内ユーザー名 <span style="color:red;">*</span> <span style="font-size:11px; color:#666;">(最大10文字・重複禁止)</span></label>
+                    <input type="text" id="userNameInput" class="form-control" maxlength="10" placeholder="例: 名鉄ファン">
                 </div>
-                <button type="button" class="submit-btn" onclick="alert('アカウント登録機能を実装中です。')">アカウントを保存・作成</button>
+                <button type="button" class="submit-btn" style="background-color: #28a745; margin-bottom: 10px;" onclick="saveUserProfile()">
+                    プロフィールを保存・更新
+                </button>
+                <button type="button" class="submit-btn" style="background-color: #dc3545;" onclick="logoutGoogle()">
+                    ログアウト
+                </button>
             </div>
 
             <div class="form-card">
@@ -779,7 +802,7 @@
         </div>
     </div>
 
-    <!-- フッター固定ナビ (5項目に変更) -->
+    <!-- フッター固定ナビ (5項目) -->
     <footer>
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
@@ -802,6 +825,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let postsData = [];
         let currentFilter = 'all';
@@ -813,7 +837,128 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
+            initAuthStateObserver();
         });
+
+        // 認証状態の監視
+        function initAuthStateObserver() {
+            auth.onAuthStateChanged(async (user) => {
+                const loggedOutDiv = document.getElementById('auth-logged-out');
+                const loggedInDiv = document.getElementById('auth-logged-in');
+                const userEmailEl = document.getElementById('userEmail');
+                const userAccountNoEl = document.getElementById('userAccountNo');
+                const userAvatarEl = document.getElementById('userAvatar');
+                const userNameInput = document.getElementById('userNameInput');
+
+                if (user) {
+                    loggedOutDiv.style.display = 'none';
+                    loggedInDiv.style.display = 'block';
+                    userEmailEl.innerText = user.email || '';
+                    if (user.photoURL) {
+                        userAvatarEl.src = user.photoURL;
+                        userAvatarEl.style.display = 'block';
+                    }
+
+                    // Firestoreからユーザー固有データを取得（管理番号・カスタムユーザー名）
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    const userDoc = await userDocRef.get();
+
+                    let accountNo = '';
+                    let customName = '';
+
+                    if (userDoc.exists) {
+                        const data = userDoc.data();
+                        accountNo = data.accountNo;
+                        customName = data.name || '';
+                    } else {
+                        // 初回ログイン時：管理番号の自動割り当て（例: M + ランダム4桁または連番）
+                        accountNo = 'M-' + Math.floor(1000 + Math.random() * 9000);
+                        customName = user.displayName ? user.displayName.slice(0, 10) : '';
+
+                        await userDocRef.set({
+                            uid: user.uid,
+                            accountNo: accountNo,
+                            name: customName,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    }
+
+                    userAccountNoEl.innerText = `管理番号: ${accountNo}`;
+                    userNameInput.value = customName;
+                } else {
+                    loggedOutDiv.style.display = 'block';
+                    loggedInDiv.style.display = 'none';
+                }
+            });
+        }
+
+        // Googleログイン実行
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    alert(`ログインしました！`);
+                })
+                .catch((error) => {
+                    console.error("ログインエラー: ", error);
+                    alert(`ログインに失敗しました: ${error.message}`);
+                });
+        }
+
+        // ログアウト実行
+        function logoutGoogle() {
+            auth.signOut().then(() => {
+                alert('ログアウトしました。');
+            }).catch((error) => {
+                console.error("ログアウトエラー: ", error);
+            });
+        }
+
+        // ユーザー名保存（重複チェック・最大10文字制限）
+        async function saveUserProfile() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const nameInput = document.getElementById('userNameInput');
+            const newName = nameInput.value.trim();
+
+            if (!newName) {
+                alert('【エラー】ユーザー名を入力してください。');
+                return;
+            }
+
+            if (newName.length > 10) {
+                alert('【エラー】ユーザー名は最大10文字までです。');
+                return;
+            }
+
+            try {
+                // 重複チェック（自分以外のユーザーで同じ名前が使われていないか確認）
+                const querySnapshot = await db.collection('users').where('name', '==', newName).get();
+                let isDuplicate = false;
+                querySnapshot.forEach((doc) => {
+                    if (doc.id !== user.uid) {
+                        isDuplicate = true;
+                    }
+                });
+
+                if (isDuplicate) {
+                    alert('【エラー】そのユーザー名は既に使用されています。別の名前を指定してください。');
+                    return;
+                }
+
+                // Firestoreのユーザーデータを更新
+                await db.collection('users').doc(user.uid).update({
+                    name: newName,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('ユーザー名を更新しました！');
+            } catch (error) {
+                console.error("プロフィール更新エラー: ", error);
+                alert('【エラー】プロフィールの保存に失敗しました。');
+            }
+        }
 
         // 管理サイトとのリアルタイム同期（onSnapshotによる自動更新）
         function fetchPostsFromFirestore() {
@@ -970,11 +1115,10 @@
             input.value = `${formattedH}:${formattedM}`;
         }
 
-        // 投稿処理（エラー検出・入力内容保持・完了通知対応）
+        // 投稿処理
         async function handlePost(event) {
             event.preventDefault();
 
-            // エラー検出1：ダイヤ種別
             if (!selectedPostSchedule) {
                 alert('【エラー】ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
                 return;
@@ -983,12 +1127,10 @@
             let formationFormatted = '';
             if (!isCouplingActive) {
                 const formationInput = document.getElementById('formation').value.trim();
-                // エラー検出2：単行編成の桁数
                 if (formationInput.length !== 4) {
                     alert('【エラー】編成番号は4桁の数字で入力してください。');
                     return;
                 }
-                // 併結がない場合はト・キを表示しない
                 formationFormatted = formationInput + 'F';
             } else {
                 const fields = document.querySelectorAll('.coupling-field');
@@ -997,12 +1139,10 @@
 
                 for (let field of fields) {
                     const val = field.value.trim();
-                    // エラー検出3：併結欄の空欄や桁数
                     if (!val || val.length !== 4) {
                         alert('【エラー】併結の編成入力欄に4桁の数字を正しく入力してください。');
                         return;
                     }
-                    // エラー検出4：重複チェック
                     if (seenVals.has(val)) {
                         alert('【エラー】併結の入力欄に同じ編成番号が重複しています。');
                         return;
@@ -1015,7 +1155,6 @@
                     alert('【エラー】併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
                 }
-                // 併結がある場合はト〜キで囲む
                 formationFormatted = 'ト' + validVals.join('+') + 'キ';
             }
 
@@ -1031,7 +1170,6 @@
             const arrTime = arrInput.value;
             const depTime = depInput.value;
 
-            // エラー検出5：時刻の未入力
             if (!passTime && !arrTime && !depTime) {
                 alert('【エラー】「通過時刻」「到着時刻」「発車時刻」のうち、少なくとも1つを入力してください。');
                 return;
@@ -1064,24 +1202,19 @@
             };
 
             try {
-                // Firestoreへ保存
                 await db.collection("posts").add(newPost);
 
-                // 成功時のみフォームをリセット
                 document.getElementById('postForm').reset();
                 if (isCouplingActive) {
                     toggleCoupling();
                 }
                 selectPostSchedule(null);
 
-                // 完了通知
                 alert('投稿が完了しました！');
-                
-                // 履歴画面へ自動移動
                 switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
             } catch (error) {
                 console.error("投稿エラー: ", error);
-                alert('【エラー】データベースへの保存に失敗しました。インターネット接続やFirebaseのセキュリティルールを確認してください。');
+                alert('【エラー】データベースへの保存に失敗しました。');
             }
         }
 
