@@ -29,11 +29,15 @@
     </table>
 
     <script>
-        // パスワード保護（簡易版）
-        const pass = prompt("管理者パスワードを入力してください");
-        if(pass !== "admin123") { // ここがパスワードです
-            alert("パスワードが違います");
-            window.location.href = "index.html";
+        // パスワード認証（ブラウザを閉じるまで再入力を省略する仕組み）
+        if (sessionStorage.getItem("adminAuth") !== "true") {
+            const pass = prompt("管理者パスワードを入力してください");
+            if (pass !== "admin123") { // ここがパスワードです
+                alert("パスワードが違います");
+                window.location.href = "index.html";
+            } else {
+                sessionStorage.setItem("adminAuth", "true");
+            }
         }
 
         const firebaseConfig = {
