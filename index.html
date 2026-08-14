@@ -933,7 +933,8 @@
                     alert('編成番号は4桁の数字で入力してください。');
                     return;
                 }
-                formationFormatted = formationInput + 'F';
+                // 左にト、右にキを付与
+                formationFormatted = 'ト' + formationInput + 'Fキ';
             } else {
                 const fields = document.querySelectorAll('.coupling-field');
                 const validVals = [];
@@ -957,7 +958,8 @@
                     alert('併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
                 }
-                formationFormatted = validVals.join('+');
+                // 左側にト、右側にキを付与して結合
+                formationFormatted = 'ト' + validVals.join('+') + 'キ';
             }
 
             const passInput = document.getElementById('passingTime');
