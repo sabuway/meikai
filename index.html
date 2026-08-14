@@ -597,7 +597,7 @@
             border-radius: 50%;
         }
 
-        /* フッター固定ナビ (5項目) */
+        /* フッター固定ナビ (6項目) */
         footer {
             position: fixed;
             bottom: 0;
@@ -624,8 +624,8 @@
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            width: 54px;
-            height: 54px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -655,65 +655,57 @@
     <main>
         <!-- 1. 最新情報画面 -->
         <section id="latest-view" class="view-section active">
-            <!-- 最新情報内タブ切り替え (説明 / お知らせ) -->
-            <div class="latest-tab-container">
-                <button class="latest-tab-btn active" onclick="selectLatestTab('manual', this)">(説明) マニュアル・操作方法</button>
-                <button class="latest-tab-btn" onclick="selectLatestTab('news', this)">お知らせ</button>
-            </div>
-
-            <!-- マニュアル・操作方法セクション -->
-            <div id="latest-sub-manual" class="latest-sub-section active">
-                <div class="form-card">
-                    <div class="manual-section">
-                        <div class="manual-title">はじめに</div>
-                        <div class="manual-body">
-                            このサイトは名鉄(名古屋鉄道)の回送の情報を共有するプラットフォームです。2026年7月11日以降の回送電車の目撃、スジの提供共有します。2026年7月11日以前の回送まとめは今後皆様からの提供を基に整備していく予定ですので実装までしばらくお待ちください。
-                        </div>
-                    </div>
-
-                    <div class="manual-section" style="margin-top: 18px;">
-                        <div class="manual-title">ルール</div>
-                        <div class="manual-body">
-                            架空のものや予想のスジの提供は禁止です。また、回送時刻は目視で確認する際もあるので1～3分前後のずれは承知の上ご利用ください。また、こちらの提供している情報からの損益については責任を取りかねますのでご了承ください。
-                        </div>
-                    </div>
-
-                    <div class="manual-section" style="margin-top: 18px;">
-                        <div class="manual-title">使い方</div>
-                        <div class="manual-subheading">最新情報について</div>
-                        <div class="manual-body">
-                            最新情報にはサイトのお知らせから名鉄の情報まで多くのことを掲載していきます。
-                        </div>
-
-                        <div class="manual-subheading">投稿について</div>
-                        <div class="manual-body">
-                            投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。
-                        </div>
-
-                        <div class="manual-subheading">回送所定について</div>
-                        <div class="manual-body">
-                            2026年7月11日改正後の回送の所定を提供していきます。皆様から提供された情報をもに順次入力していきます。
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- お知らせセクション -->
-            <div id="latest-sub-news" class="latest-sub-section">
-                <h2 style="font-size: 18px; color: #333; margin-top: 0;">最新のお知らせ</h2>
-                <div class="info-card">
-                    <div class="news-item">
-                        <div class="news-date">8月14日</div>
-                        <div class="news-title">「名鉄回送情報共有」公開</div>
-                        <div class="news-body">
-                            名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
-                        </div>
+            <h2 style="font-size: 18px; color: #333; margin-top: 0;">最新のお知らせ</h2>
+            <div class="info-card">
+                <div class="news-item">
+                    <div class="news-date">8月14日</div>
+                    <div class="news-title">「名鉄回送情報共有」公開</div>
+                    <div class="news-body">
+                        名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 2. 投稿欄画面 -->
+        <!-- 2. 説明画面 -->
+        <section id="manual-view" class="view-section">
+            <div class="form-card">
+                <div class="manual-section">
+                    <div class="manual-title">はじめに</div>
+                    <div class="manual-body">
+                        このサイトは名鉄(名古屋鉄道)の回送の情報を共有するプラットフォームです。2026年7月11日以降の回送電車の目撃、スジの提供共有します。2026年7月11日以前の回送まとめは今後皆様からの提供を基に整備していく予定ですので実装までしばらくお待ちください。
+                    </div>
+                </div>
+
+                <div class="manual-section" style="margin-top: 18px;">
+                    <div class="manual-title">ルール</div>
+                    <div class="manual-body">
+                        架空のものや予想のスジの提供は禁止です。また、回送時刻は目視で確認する際もあるので1～3分前後のずれは承知の上ご利用ください。また、こちらの提供している情報からの損益については責任を取りかねますのでご了承ください。
+                    </div>
+                </div>
+
+                <div class="manual-section" style="margin-top: 18px;">
+                    <div class="manual-title">使い方</div>
+                    <div class="manual-subheading">最新情報について</div>
+                    <div class="manual-body">
+                        最新情報にはサイトのお知らせから名鉄の情報まで多くのことを掲載していきます。
+                    </div>
+
+                    <div class="manual-subheading">投稿について</div>
+                    <div class="manual-body">
+                        投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。
+                    </div>
+
+                    <div class="manual-subheading">回送所定について</div>
+                    <div class="manual-body">
+                        2026年7月11日改正後の回送の所定を提供していきます。皆様から提供された情報をもに順次入力していきます。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 投稿欄画面 -->
         <section id="post-view" class="view-section">
             <div class="form-card">
                 <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
@@ -800,7 +792,7 @@
             </div>
         </section>
 
-        <!-- 3. 履歴画面 -->
+        <!-- 4. 履歴画面 -->
         <section id="history-view" class="view-section">
             <div class="search-box-card">
                 <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番など)" oninput="filterHistory()">
@@ -821,7 +813,7 @@
             </div>
         </section>
 
-        <!-- 4. 回送所定一覧画面 -->
+        <!-- 5. 回送所定一覧画面 -->
         <section id="syotei-view" class="view-section">
             <div class="section-header">
                 <h2>回送所定一覧</h2>
@@ -853,7 +845,7 @@
             </div>
         </section>
 
-        <!-- 5. 設定画面 -->
+        <!-- 6. 設定画面 -->
         <section id="account-view" class="view-section">
             <div class="section-header">
                 <h2>設定</h2>
@@ -887,10 +879,11 @@
         </div>
     </div>
 
-    <!-- フッター固定ナビ (5項目) -->
+    <!-- フッター固定ナビ (6項目: 最新情報 / 説明 / 投稿欄 / 履歴 / 回送所定 / 設定) -->
     <footer>
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
+            <button class="footer-btn" onclick="switchView('manual-view', this)">説明</button>
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
             <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
             <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
@@ -915,7 +908,7 @@
         let currentFilter = 'all';
         let currentSyoteiDay = 'weekday';
         let selectedPostSchedule = null;
-        let selectedDirectionType = null; // デフォルト未選択
+        let selectedDirectionType = null;
 
         let isCouplingActive = false;
         let couplingCount = 2; 
@@ -976,18 +969,6 @@
             document.getElementById(viewId).classList.add('active');
             if (btnElement) {
                 btnElement.classList.add('active');
-            }
-        }
-
-        function selectLatestTab(tabType, btnElement) {
-            document.querySelectorAll('.latest-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.latest-sub-section').forEach(s => s.classList.remove('active'));
-
-            btnElement.classList.add('active');
-            if (tabType === 'manual') {
-                document.getElementById('latest-sub-manual').classList.add('active');
-            } else if (tabType === 'news') {
-                document.getElementById('latest-sub-news').classList.add('active');
             }
         }
 
@@ -1237,7 +1218,7 @@
                 document.getElementById('btn-dir-yukisaki').classList.remove('active');
 
                 alert('投稿が完了しました！');
-                switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
+                switchView('history-view', document.querySelectorAll('.footer-btn')[3]);
             } catch (error) {
                 console.error("投稿エラー: ", error);
                 alert('【エラー】データベースへの保存に失敗しました。');
