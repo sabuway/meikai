@@ -56,40 +56,6 @@
             margin-bottom: 15px;
         }
 
-        /* 最新情報画面内のタブ（マニュアル / お知らせ） */
-        .latest-tab-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .latest-tab-btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #ffffff;
-            color: #333;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .latest-tab-btn.active {
-            background-color: #d0021b;
-            color: #ffffff;
-            border-color: #d0021b;
-        }
-
-        .latest-sub-section {
-            display: none;
-        }
-
-        .latest-sub-section.active {
-            display: block;
-        }
-
         /* マニュアル内コンテンツスタイル */
         .manual-section {
             margin-bottom: 20px;
@@ -242,6 +208,34 @@
             min-height: 80px;
         }
 
+        /* 編成入力の単体レイアウト調整 (不明ボタン配置用) */
+        .single-formation-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .unknown-toggle-btn {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 0 12px;
+            height: 48px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .unknown-toggle-btn.active {
+            background-color: #6c757d;
+            color: #ffffff;
+            border-color: #6c757d;
+        }
+
         /* 併結オプションのスタイル */
         .coupling-option-container {
             display: flex;
@@ -315,12 +309,38 @@
             flex: 1;
         }
 
-        .coupling-field {
-            min-width: 65px;
+        .coupling-item-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
             flex: 1;
-            padding: 10px 4px;
+        }
+
+        .coupling-field {
+            width: 100%;
+            padding: 8px 4px;
             text-align: center;
-            font-size: 15px;
+            font-size: 14px;
+        }
+
+        .coupling-unknown-btn {
+            margin-top: 4px;
+            background-color: #f0f0f0;
+            color: #555;
+            border: 1px solid #ccc;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .coupling-unknown-btn.active {
+            background-color: #6c757d;
+            color: #ffffff;
+            border-color: #6c757d;
         }
 
         .coupling-actions {
@@ -694,7 +714,7 @@
 
                     <div class="manual-subheading">投稿について</div>
                     <div class="manual-body">
-                        投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。
+                        投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。編成が不明な場合は「不明」ボタンをご活用ください。
                     </div>
 
                     <div class="manual-subheading">回送所定について</div>
@@ -743,7 +763,10 @@
                     <!-- 編成番号 & 併結オプション -->
                     <div class="form-group">
                         <label for="formation">編成番号 <span style="color:red;">*</span></label>
-                        <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
+                        <div class="single-formation-wrapper">
+                            <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
+                            <button type="button" id="singleUnknownBtn" class="unknown-toggle-btn" onclick="toggleSingleUnknown()">不明</button>
+                        </div>
                         
                         <div class="coupling-option-container">
                             <span class="coupling-desc">併結有</span>
@@ -854,7 +877,7 @@
             <div class="form-card">
                 <h3 style="margin-top:0; font-size:16px; color:#333;">アプリ内ユーザー名</h3>
                 <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
-                    投稿時などに表示される名前を設定します。
+                    投稿時などに表示される名前を設定します。<br>※名前の変更は1週間に1回のみ可能です。
                 </p>
 
                 <div class="form-group">
@@ -879,7 +902,7 @@
         </div>
     </div>
 
-    <!-- フッター固定ナビ (6項目: 最新情報 / 説明 / 投稿欄 / 履歴 / 回送所定 / 設定) -->
+    <!-- フッター固定ナビ (6項目) -->
     <footer>
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
@@ -911,6 +934,7 @@
         let selectedDirectionType = null;
 
         let isCouplingActive = false;
+        let isSingleUnknownActive = false;
         let couplingCount = 2; 
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -923,8 +947,7 @@
             if (savedName) {
                 document.getElementById('userNameInput').value = savedName;
             } else {
-                document.getElementById('userNameInput').value = '名鉄ファン';
-                localStorage.setItem('meitetsu_user_name', '名鉄ファン');
+                document.getElementById('userNameInput').value = '';
             }
         }
 
@@ -942,7 +965,26 @@
                 return;
             }
 
+            const currentSavedName = localStorage.getItem('meitetsu_user_name') || '';
+            const lastUpdatedTime = localStorage.getItem('meitetsu_name_updated_at');
+
+            if (currentSavedName && currentSavedName !== newName && lastUpdatedTime) {
+                const now = new Date().getTime();
+                const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+                const elapsed = now - parseInt(lastUpdatedTime, 10);
+
+                if (elapsed < oneWeekMs) {
+                    const remainingDays = Math.ceil((oneWeekMs - elapsed) / (24 * 60 * 60 * 1000));
+                    alert(`【エラー】名前の変更は1週間に1回のみ可能です。あと約 ${remainingDays} 日お待ちください。`);
+                    return;
+                }
+            }
+
             localStorage.setItem('meitetsu_user_name', newName);
+            if (!currentSavedName || currentSavedName !== newName) {
+                localStorage.setItem('meitetsu_name_updated_at', new Date().getTime().toString());
+            }
+
             alert('ユーザー名を保存しました！');
         }
 
@@ -1000,25 +1042,53 @@
             }
         }
 
+        function toggleSingleUnknown() {
+            isSingleUnknownActive = !isSingleUnknownActive;
+            const btn = document.getElementById('singleUnknownBtn');
+            const input = document.getElementById('formation');
+
+            if (isSingleUnknownActive) {
+                btn.classList.add('active');
+                input.value = '';
+                input.disabled = true;
+                input.removeAttribute('required');
+            } else {
+                btn.classList.remove('active');
+                input.disabled = false;
+                input.setAttribute('required', 'required');
+            }
+        }
+
         function toggleCoupling() {
             isCouplingActive = !isCouplingActive;
             const toggleBtn = document.getElementById('couplingToggleBtn');
             const formationInput = document.getElementById('formation');
+            const singleUnknownBtn = document.getElementById('singleUnknownBtn');
             const couplingArea = document.getElementById('couplingInputsArea');
 
             if (isCouplingActive) {
                 toggleBtn.innerText = 'ON';
                 toggleBtn.classList.add('active');
+                
+                // 単体入力を無効化
+                if (isSingleUnknownActive) {
+                    toggleSingleUnknown();
+                }
                 formationInput.disabled = true;
                 formationInput.removeAttribute('required');
+                singleUnknownBtn.disabled = true;
+
                 couplingArea.classList.add('active');
                 couplingCount = 2; 
                 renderCouplingFields();
             } else {
                 toggleBtn.innerText = 'OFF';
                 toggleBtn.classList.remove('active');
+
                 formationInput.disabled = false;
                 formationInput.setAttribute('required', 'required');
+                singleUnknownBtn.disabled = false;
+
                 couplingArea.classList.remove('active');
             }
         }
@@ -1027,19 +1097,40 @@
 
         function renderCouplingFields(preserve) {
             const container = document.getElementById('couplingInputsList');
-            const oldVals = preserve
-                ? Array.from(container.querySelectorAll('.coupling-field')).map(el => el.value)
+            const oldData = preserve
+                ? Array.from(container.querySelectorAll('.coupling-item-box')).map(box => {
+                    const inp = box.querySelector('.coupling-field');
+                    const btn = box.querySelector('.coupling-unknown-btn');
+                    return { val: inp.value, isUnknown: btn.classList.contains('active') };
+                  })
                 : [];
-            let html = '';
 
+            let html = '';
             for (let i = 0; i < couplingCount; i++) {
                 const placeholderVal = couplingExamples[i] || "3501";
-                const existingVal = oldVals[i] || '';
+                const item = oldData[i] || { val: '', isUnknown: false };
+                
                 html += `
-                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" value="${existingVal}" oninput="onlyNumbers(this)">
+                    <div class="coupling-item-box">
+                        <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" value="${item.val}" oninput="onlyNumbers(this)" ${item.isUnknown ? 'disabled' : ''}>
+                        <button type="button" class="coupling-unknown-btn ${item.isUnknown ? 'active' : ''}" onclick="toggleCouplingItemUnknown(this)">不明</button>
+                    </div>
                 `;
             }
             container.innerHTML = html;
+        }
+
+        function toggleCouplingItemUnknown(btn) {
+            btn.classList.toggle('active');
+            const box = btn.closest('.coupling-item-box');
+            const input = box.querySelector('.coupling-field');
+
+            if (btn.classList.contains('active')) {
+                input.value = '';
+                input.disabled = true;
+            } else {
+                input.disabled = false;
+            }
         }
 
         function addCouplingField() {
@@ -1114,6 +1205,13 @@
         async function handlePost(event) {
             event.preventDefault();
 
+            const authorName = localStorage.getItem('meitetsu_user_name');
+            if (!authorName || !authorName.trim()) {
+                alert('【エラー】投稿するには「設定」画面からユーザー名を設定してください。');
+                switchView('account-view', document.querySelectorAll('.footer-btn')[5]);
+                return;
+            }
+
             if (!selectedPostSchedule) {
                 alert('【エラー】ダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
                 return;
@@ -1126,33 +1224,44 @@
 
             let formationFormatted = '';
             if (!isCouplingActive) {
-                const formationInput = document.getElementById('formation').value.trim();
-                if (formationInput.length !== 4) {
-                    alert('【エラー】編成番号は4桁の数字で入力してください。');
-                    return;
+                if (isSingleUnknownActive) {
+                    formationFormatted = '不明';
+                } else {
+                    const formationInput = document.getElementById('formation').value.trim();
+                    if (formationInput.length !== 4) {
+                        alert('【エラー】編成番号は4桁の数字で入力してください。');
+                        return;
+                    }
+                    formationFormatted = formationInput + 'F';
                 }
-                formationFormatted = formationInput + 'F';
             } else {
-                const fields = document.querySelectorAll('.coupling-field');
+                const boxes = document.querySelectorAll('.coupling-item-box');
                 const validVals = [];
                 const seenVals = new Set();
 
-                for (let field of fields) {
-                    const val = field.value.trim();
-                    if (!val || val.length !== 4) {
-                        alert('【エラー】併結の編成入力欄に4桁の数字を正しく入力してください。');
-                        return;
+                for (let box of boxes) {
+                    const field = box.querySelector('.coupling-field');
+                    const unknownBtn = box.querySelector('.coupling-unknown-btn');
+
+                    if (unknownBtn.classList.contains('active')) {
+                        validVals.push('不明');
+                    } else {
+                        const val = field.value.trim();
+                        if (!val || val.length !== 4) {
+                            alert('【エラー】併結の編成入力欄に4桁の数字を正しく入力するか「不明」を選択してください。');
+                            return;
+                        }
+                        if (seenVals.has(val)) {
+                            alert('【エラー】併結の入力欄に同じ編成番号が重複しています。');
+                            return;
+                        }
+                        seenVals.add(val);
+                        validVals.push(val + 'F');
                     }
-                    if (seenVals.has(val)) {
-                        alert('【エラー】併結の入力欄に同じ編成番号が重複しています。');
-                        return;
-                    }
-                    seenVals.add(val);
-                    validVals.push(val + 'F');
                 }
 
                 if (validVals.length < 2) {
-                    alert('【エラー】併結有の場合は、最低2つの編成番号を入力してください。');
+                    alert('【エラー】併結有の場合は、最低2つの編成情報を入力してください。');
                     return;
                 }
                 formationFormatted = 'ト' + validVals.join('+') + 'キ';
@@ -1182,7 +1291,6 @@
             const directionFormatted = rawDirection.endsWith(selectedDirectionType) ? rawDirection : `${rawDirection}（${selectedDirectionType}）`;
             
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
-            const authorName = localStorage.getItem('meitetsu_user_name') || '名鉄ファン';
 
             const now = new Date();
             const isHoliday = (selectedPostSchedule === 'holiday');
@@ -1198,7 +1306,7 @@
                 arrTime: arrTime,
                 depTime: depTime,
                 remarks: remarks,
-                authorName: authorName,
+                authorName: authorName.trim(),
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
                 rawDate: dateStr,
                 isHoliday: isHoliday,
@@ -1211,6 +1319,9 @@
                 document.getElementById('postForm').reset();
                 if (isCouplingActive) {
                     toggleCoupling();
+                }
+                if (isSingleUnknownActive) {
+                    toggleSingleUnknown();
                 }
                 selectPostSchedule(null);
                 selectedDirectionType = null;
