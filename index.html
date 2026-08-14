@@ -538,7 +538,7 @@
             border-radius: 50%;
         }
 
-        /* フッター固定ナビ (4項目) */
+        /* フッター固定ナビ (5項目に変更) */
         footer {
             position: fixed;
             bottom: 0;
@@ -562,11 +562,11 @@
             background-color: #eeeeee;
             border: none;
             color: #333333;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            width: 58px;
-            height: 58px;
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -624,7 +624,7 @@
                     
                     <div class="form-group">
                         <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="trainNumber" class="form-control" placeholder="例: K24611" maxlength="6">
+                        <input type="text" id="trainNumber" class="form-control" placeholder="例: K2391S" maxlength="8">
                     </div>
 
                     <div class="form-group">
@@ -741,6 +741,31 @@
                 <button class="syotei-btn" onclick="openSyoteiDetail('瀬戸線')">瀬戸線</button>
             </div>
         </section>
+
+        <!-- 5. アカウント設定画面 (新規追加) -->
+        <section id="account-view" class="view-section">
+            <div class="section-header">
+                <h2>アカウント設定</h2>
+            </div>
+            <div class="form-card">
+                <h3 style="margin-top:0; font-size:16px; color:#333;">アカウント作成 / ログイン</h3>
+                <div class="form-group">
+                    <label for="accountName">ユーザー名</label>
+                    <input type="text" id="accountName" class="form-control" placeholder="例: 名鉄太郎">
+                </div>
+                <div class="form-group">
+                    <label for="accountEmail">メールアドレス</label>
+                    <input type="email" id="accountEmail" class="form-control" placeholder="例: example@email.com">
+                </div>
+                <button type="button" class="submit-btn" onclick="alert('アカウント登録機能を実装中です。')">アカウントを保存・作成</button>
+            </div>
+
+            <div class="form-card">
+                <h3 style="margin-top:0; font-size:16px; color:#333;">詳細設定</h3>
+                <p style="font-size:13px; color:#666;">通知設定やテーマ切り替えなどの詳細をここで管理できます。</p>
+                <button type="button" class="submit-btn" style="background-color:#6c757d;" onclick="alert('詳細設定画面は準備中です。')">詳細設定を開く</button>
+            </div>
+        </section>
     </main>
 
     <!-- 運用履歴モーダル -->
@@ -754,13 +779,14 @@
         </div>
     </div>
 
-    <!-- フッター固定ナビ -->
+    <!-- フッター固定ナビ (5項目に変更) -->
     <footer>
         <nav class="footer-nav">
             <button class="footer-btn active" onclick="switchView('latest-view', this)">最新<br>情報</button>
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
             <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
             <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
+            <button class="footer-btn" onclick="switchView('account-view', this)">アカウント<br>設定</button>
         </nav>
     </footer>
 
@@ -962,7 +988,8 @@
                     alert('【エラー】編成番号は4桁の数字で入力してください。');
                     return;
                 }
-                formationFormatted = 'ト' + formationInput + 'Fキ';
+                // 併結がない場合はト・キを表示しない
+                formationFormatted = formationInput + 'F';
             } else {
                 const fields = document.querySelectorAll('.coupling-field');
                 const validVals = [];
@@ -988,6 +1015,7 @@
                     alert('【エラー】併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
                 }
+                // 併結がある場合はト〜キで囲む
                 formationFormatted = 'ト' + validVals.join('+') + 'キ';
             }
 
