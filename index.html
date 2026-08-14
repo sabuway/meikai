@@ -427,6 +427,12 @@
             cursor: pointer;
         }
 
+        .submit-btn:disabled {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            cursor: not-allowed;
+        }
+
         /* セクションヘッダー */
         .section-header {
             display: flex;
@@ -828,7 +834,7 @@
 
                     <div class="form-group">
                         <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 789 (➔ 07:89)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 758 (➔ 07:58)" maxlength="5" onblur="finalizeTimeFormat(this)">
                     </div>
 
                     <div class="form-group">
@@ -910,7 +916,7 @@
                     <label for="userNameInput">ユーザー名 <span style="color:red;">*</span> <span style="font-size:11px; color:#666;">(最大10文字)</span></label>
                     <input type="text" id="userNameInput" class="form-control" maxlength="10" placeholder="例: 名鉄ファン">
                 </div>
-                <button type="button" class="submit-btn" style="background-color: #28a745;" onclick="saveLocalUserName()">
+                <button type="button" id="saveNameBtn" class="submit-btn" style="background-color: #28a745;" onclick="saveLocalUserName()">
                     名前を保存する
                 </button>
             </div>
@@ -970,16 +976,32 @@
 
         function initUserName() {
             const savedName = localStorage.getItem('meitetsu_user_name');
+            const lastUpdatedTime = localStorage.getItem('meitetsu_name_updated_at');
+            const saveBtn = document.getElementById('saveNameBtn');
+
             if (savedName) {
                 document.getElementById('userNameInput').value = savedName;
             } else {
                 document.getElementById('userNameInput').value = '';
+            }
+
+            // 画面読み込み時に1週間以内の制限判定を行う
+            if (lastUpdatedTime) {
+                const now = new Date().getTime();
+                const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+                const elapsed = now - parseInt(lastUpdatedTime, 10);
+
+                if (elapsed < oneWeekMs) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerText = "変更済み";
+                }
             }
         }
 
         async function saveLocalUserName() {
             const nameInput = document.getElementById('userNameInput');
             const newName = nameInput.value.trim();
+            const saveBtn = document.getElementById('saveNameBtn');
 
             if (!newName) {
                 alert('【エラー】ユーザー名を入力してください。');
@@ -1043,6 +1065,10 @@
                 localStorage.setItem('meitetsu_name_updated_at', new Date().getTime().toString());
             }
 
+            // 保存成功時にボタンを無効化しスタイル・文言を変更
+            saveBtn.disabled = true;
+            saveBtn.innerText = "変更済み";
+
             alert('ユーザー名を保存しました！');
         }
 
@@ -1083,6 +1109,9 @@
             } else if (scheduleType === 'holiday') {
                 btnHoliday.classList.add('active');
                 btnWeekday.classList.remove('active');
+            } else {
+                btnWeekday.classList.remove('active');
+                btnHoliday.classList.remove('active');
             }
         }
 
@@ -1097,6 +1126,9 @@
             } else if (type === '行先') {
                 btnYukisaki.classList.add('active');
                 btnHoumen.classList.remove('active');
+            } else {
+                btnHoumen.classList.remove('active');
+                btnYukisaki.classList.remove('active');
             }
         }
 
@@ -1344,10 +1376,6 @@
             const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
-            
-            const suffix = selectedDirectionType === '行先' ? '（行き）' : '（方面）';
-            const directionFormatted = rawDirection.endsWith('（方面）') || rawDirection.endsWith('（行き）') ? rawDirection : `${rawDirection}${suffix}`;
-            
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
             const now = new Date();
@@ -1358,13 +1386,14 @@
             const newPost = {
                 trainNum: trainNum,
                 station: station,
-                direction: directionFormatted,
-                formation: formationFormatted,
+                direction: rawDirection,
+                directionType: selectedDirectionType,
+                remarks: remarks,
+                authorName: authorName.trim(),
                 passTime: passTime,
                 arrTime: arrTime,
                 depTime: depTime,
-                remarks: remarks,
-                authorName: authorName.trim(),
+                formation: formationFormatted,
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
                 rawDate: dateStr,
                 isHoliday: isHoliday,
@@ -1382,9 +1411,7 @@
                     toggleSingleUnknown();
                 }
                 selectPostSchedule(null);
-                selectedDirectionType = null;
-                document.getElementById('btn-dir-houmen').classList.remove('active');
-                document.getElementById('btn-dir-yukisaki').classList.remove('active');
+                selectDirectionType(null);
 
                 alert('投稿が完了しました！');
                 switchView('history-view', document.querySelectorAll('.footer-btn')[3]);
@@ -1407,6 +1434,32 @@
             return times.join(' / ');
         }
 
+        function getFormattedDirection(post) {
+            let rawDir = post.direction || '';
+            let type = post.directionType;
+
+            // 旧形式データ（（行き）や（方面）が文字列に含まれている場合）の自動判定・変換
+            if (!type) {
+                if (rawDir.includes('（行き）') || rawDir.includes('行')) {
+                    type = '行先';
+                } else if (rawDir.includes('（方面）') || rawDir.includes('方面')) {
+                    type = '方面';
+                } else {
+                    type = '行先';
+                }
+            }
+
+            // 余分なサフィックスがあれば一度削る
+            let cleanDir = rawDir.replace(/（行き）|（方面）|行|方面/g, '').trim();
+            if (!cleanDir) cleanDir = rawDir;
+
+            if (type === '行先') {
+                return `${cleanDir}行`;
+            } else {
+                return `${cleanDir}方面`;
+            }
+        }
+
         function getSortTime(post) {
             return post.passTime || post.arrTime || post.depTime || '';
         }
@@ -1426,15 +1479,16 @@
             let timelineHTML = '';
             matchingPosts.forEach(post => {
                 const timeText = getTimeDisplayString(post);
+                const dirFormatted = getFormattedDirection(post);
                 const author = post.authorName ? `投稿者: ${post.authorName}` : '';
                 timelineHTML += `
                     <div class="timeline-item">
-                        <div style="font-weight:bold; color:#d0021b;">${timeText} - ${post.station}</div>
+                        <div style="font-weight:bold; color:#d0021b;">${timeText} - 確認駅:${post.station}</div>
                         <div style="font-size:13px; color:#333; margin-top:2px;">
-                            ${post.direction} | 編成: ${post.formation}
+                            ➔ ${dirFormatted} | 編成: ${post.formation}
                         </div>
                         <div style="font-size:12px; color:#666; margin-top:2px;">
-                            備考: ${post.remarks} / ${author} (${post.postDate})
+                            備考: ${post.remarks} / ${author} (投稿時間: ${post.postDate})
                         </div>
                     </div>
                 `;
@@ -1460,11 +1514,12 @@
             const timeText = getTimeDisplayString(post);
             const authorText = post.authorName ? `投稿者: ${post.authorName}` : '投稿者: 名無し';
             const scheduleBadge = post.isHoliday ? '<span class="schedule-badge-holiday">休日</span>' : '<span class="schedule-badge-weekday">平日</span>';
+            const dirFormatted = getFormattedDirection(post);
 
             return `
                 <div class="${cardClass}">
                     <div class="post-header">
-                        <span class="post-title">${post.trainNum}</span>
+                        <span class="post-title">列番: ${post.trainNum}</span>
                         <div class="post-time-container">
                             ${historyBtnHTML}
                             ${scheduleBadge}
@@ -1472,7 +1527,7 @@
                         </div>
                     </div>
                     <div class="post-details">
-                        <div class="left-info"><strong>行先/方面:</strong> ${post.station} ➔ ${post.direction}</div>
+                        <div class="left-info"><strong>行先/方面:</strong> 確認駅:${post.station} ➔ ${dirFormatted}</div>
                         <div class="right-info"><strong>編成:</strong> ${post.formation}</div>
                     </div>
                     <div class="post-remarks">
@@ -1480,7 +1535,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #888; margin-top: 6px;">
                         <span>${authorText}</span>
-                        <span>${post.postDate}</span>
+                        <span>投稿時間: ${post.postDate}</span>
                     </div>
                 </div>
             `;
