@@ -789,6 +789,7 @@
             fetchPostsFromFirestore();
         });
 
+        // 管理サイトとのリアルタイム同期（onSnapshotによる自動更新）
         function fetchPostsFromFirestore() {
             db.collection("posts")
               .orderBy("timestamp", "desc")
@@ -857,14 +858,18 @@
 
         const couplingExamples = ["3501", "3101", "3151", "9101"];
 
-        function renderCouplingFields() {
+        function renderCouplingFields(preserve) {
             const container = document.getElementById('couplingInputsList');
+            const oldVals = preserve
+                ? Array.from(container.querySelectorAll('.coupling-field')).map(el => el.value)
+                : [];
             let html = '';
 
             for (let i = 0; i < couplingCount; i++) {
                 const placeholderVal = couplingExamples[i] || "3501";
+                const existingVal = oldVals[i] || '';
                 html += `
-                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" oninput="onlyNumbers(this)">
+                    <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" value="${existingVal}" oninput="onlyNumbers(this)">
                 `;
             }
             container.innerHTML = html;
@@ -873,14 +878,14 @@
         function addCouplingField() {
             if (couplingCount < 4) {
                 couplingCount++;
-                renderCouplingFields();
+                renderCouplingFields(true);
             }
         }
 
         function removeCouplingField() {
             if (couplingCount > 2) {
                 couplingCount--;
-                renderCouplingFields();
+                renderCouplingFields(true);
             }
         }
 
