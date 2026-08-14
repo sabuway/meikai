@@ -213,7 +213,7 @@
             font-weight: bold;
         }
 
-        /* 併結入力エリア (横並び・ト方/キ方ガイド付き) */
+        /* 併結入力エリア */
         .coupling-inputs-area {
             display: none;
             margin-top: 10px;
@@ -261,7 +261,6 @@
             font-size: 15px;
         }
 
-        /* ＋ / － ボタンエリア (右下) */
         .coupling-actions {
             display: flex;
             flex-direction: column;
@@ -433,7 +432,6 @@
             gap: 6px;
         }
 
-        /* 同一列番 運用履歴ボタン */
         .history-btn {
             background-color: #007bff;
             color: #ffffff;
@@ -475,7 +473,7 @@
             padding: 30px 0;
         }
 
-        /* モーダル（運用履歴の表示ポップアップ） */
+        /* モーダル */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -519,7 +517,6 @@
             cursor: pointer;
         }
 
-        /* 運用履歴タイムライン */
         .timeline-item {
             border-left: 3px solid #d0021b;
             padding-left: 12px;
@@ -743,50 +740,25 @@
             </div>
         </section>
 
-        <!-- 5. アカウント設定画面 (Google認証 + ユーザー名制限対応) -->
+        <!-- 5. 名前設定画面 -->
         <section id="account-view" class="view-section">
             <div class="section-header">
-                <h2>アカウント設定</h2>
+                <h2>名前の設定</h2>
             </div>
             
-            <!-- 未ログイン時 -->
-            <div id="auth-logged-out" class="form-card" style="text-align: center;">
-                <h3 style="margin-top:0; font-size:16px; color:#333;">Googleアカウントでログイン</h3>
-                <p style="font-size: 13px; color: #666; margin-bottom: 20px;">
-                    Googleアカウントを使用して、簡単にサインイン・アカウント作成が行えます。
+            <div class="form-card">
+                <h3 style="margin-top:0; font-size:16px; color:#333;">アプリ内ユーザー名</h3>
+                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                    投稿時などに表示される名前を設定します。
                 </p>
-                <button type="button" class="submit-btn" style="background-color: #4285F4;" onclick="loginWithGoogle()">
-                    Googleアカウントでログイン
-                </button>
-            </div>
-
-            <!-- ログイン中 -->
-            <div id="auth-logged-in" class="form-card" style="display: none;">
-                <h3 style="margin-top:0; font-size:16px; color:#333;">アカウント情報</h3>
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <img id="userAvatar" src="" alt="プロフィール画像" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; display: none;">
-                    <div>
-                        <div id="userEmail" style="font-size: 13px; color: #666;">-</div>
-                        <div id="userAccountNo" style="font-size: 12px; color: #d0021b; font-weight: bold; margin-top: 2px;">-</div>
-                    </div>
-                </div>
 
                 <div class="form-group">
-                    <label for="userNameInput">アプリ内ユーザー名 <span style="color:red;">*</span> <span style="font-size:11px; color:#666;">(最大10文字・重複禁止)</span></label>
+                    <label for="userNameInput">ユーザー名 <span style="color:red;">*</span> <span style="font-size:11px; color:#666;">(最大10文字)</span></label>
                     <input type="text" id="userNameInput" class="form-control" maxlength="10" placeholder="例: 名鉄ファン">
                 </div>
-                <button type="button" class="submit-btn" style="background-color: #28a745; margin-bottom: 10px;" onclick="saveUserProfile()">
-                    プロフィールを保存・更新
+                <button type="button" class="submit-btn" style="background-color: #28a745;" onclick="saveLocalUserName()">
+                    名前を保存する
                 </button>
-                <button type="button" class="submit-btn" style="background-color: #dc3545;" onclick="logoutGoogle()">
-                    ログアウト
-                </button>
-            </div>
-
-            <div class="form-card">
-                <h3 style="margin-top:0; font-size:16px; color:#333;">詳細設定</h3>
-                <p style="font-size:13px; color:#666;">通知設定やテーマ切り替えなどの詳細をここで管理できます。</p>
-                <button type="button" class="submit-btn" style="background-color:#6c757d;" onclick="alert('詳細設定画面は準備中です。')">詳細設定を開く</button>
             </div>
         </section>
     </main>
@@ -809,7 +781,7 @@
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
             <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
             <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
-            <button class="footer-btn" onclick="switchView('account-view', this)">アカウント<br>設定</button>
+            <button class="footer-btn" onclick="switchView('account-view', this)">名前<br>設定</button>
         </nav>
     </footer>
 
@@ -825,7 +797,6 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth();
 
         let postsData = [];
         let currentFilter = 'all';
@@ -837,88 +808,15 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
-            initAuthStateObserver();
+            // 保存されているユーザー名をブラウザのローカルストレージから読み込み
+            const savedName = localStorage.getItem('meitetsu_user_name');
+            if (savedName) {
+                document.getElementById('userNameInput').value = savedName;
+            }
         });
 
-        // 認証状態の監視
-        function initAuthStateObserver() {
-            auth.onAuthStateChanged(async (user) => {
-                const loggedOutDiv = document.getElementById('auth-logged-out');
-                const loggedInDiv = document.getElementById('auth-logged-in');
-                const userEmailEl = document.getElementById('userEmail');
-                const userAccountNoEl = document.getElementById('userAccountNo');
-                const userAvatarEl = document.getElementById('userAvatar');
-                const userNameInput = document.getElementById('userNameInput');
-
-                if (user) {
-                    loggedOutDiv.style.display = 'none';
-                    loggedInDiv.style.display = 'block';
-                    userEmailEl.innerText = user.email || '';
-                    if (user.photoURL) {
-                        userAvatarEl.src = user.photoURL;
-                        userAvatarEl.style.display = 'block';
-                    }
-
-                    // Firestoreからユーザー固有データを取得（管理番号・カスタムユーザー名）
-                    const userDocRef = db.collection('users').doc(user.uid);
-                    const userDoc = await userDocRef.get();
-
-                    let accountNo = '';
-                    let customName = '';
-
-                    if (userDoc.exists) {
-                        const data = userDoc.data();
-                        accountNo = data.accountNo;
-                        customName = data.name || '';
-                    } else {
-                        // 初回ログイン時：管理番号の自動割り当て（例: M + ランダム4桁または連番）
-                        accountNo = 'M-' + Math.floor(1000 + Math.random() * 9000);
-                        customName = user.displayName ? user.displayName.slice(0, 10) : '';
-
-                        await userDocRef.set({
-                            uid: user.uid,
-                            accountNo: accountNo,
-                            name: customName,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true });
-                    }
-
-                    userAccountNoEl.innerText = `管理番号: ${accountNo}`;
-                    userNameInput.value = customName;
-                } else {
-                    loggedOutDiv.style.display = 'block';
-                    loggedInDiv.style.display = 'none';
-                }
-            });
-        }
-
-        // Googleログイン実行
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    alert(`ログインしました！`);
-                })
-                .catch((error) => {
-                    console.error("ログインエラー: ", error);
-                    alert(`ログインに失敗しました: ${error.message}`);
-                });
-        }
-
-        // ログアウト実行
-        function logoutGoogle() {
-            auth.signOut().then(() => {
-                alert('ログアウトしました。');
-            }).catch((error) => {
-                console.error("ログアウトエラー: ", error);
-            });
-        }
-
-        // ユーザー名保存（重複チェック・最大10文字制限）
-        async function saveUserProfile() {
-            const user = auth.currentUser;
-            if (!user) return;
-
+        // ユーザー名のローカル保存（ブラウザ保存）
+        function saveLocalUserName() {
             const nameInput = document.getElementById('userNameInput');
             const newName = nameInput.value.trim();
 
@@ -932,35 +830,10 @@
                 return;
             }
 
-            try {
-                // 重複チェック（自分以外のユーザーで同じ名前が使われていないか確認）
-                const querySnapshot = await db.collection('users').where('name', '==', newName).get();
-                let isDuplicate = false;
-                querySnapshot.forEach((doc) => {
-                    if (doc.id !== user.uid) {
-                        isDuplicate = true;
-                    }
-                });
-
-                if (isDuplicate) {
-                    alert('【エラー】そのユーザー名は既に使用されています。別の名前を指定してください。');
-                    return;
-                }
-
-                // Firestoreのユーザーデータを更新
-                await db.collection('users').doc(user.uid).update({
-                    name: newName,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                alert('ユーザー名を更新しました！');
-            } catch (error) {
-                console.error("プロフィール更新エラー: ", error);
-                alert('【エラー】プロフィールの保存に失敗しました。');
-            }
+            localStorage.setItem('meitetsu_user_name', newName);
+            alert('ユーザー名を保存しました！');
         }
 
-        // 管理サイトとのリアルタイム同期（onSnapshotによる自動更新）
         function fetchPostsFromFirestore() {
             db.collection("posts")
               .orderBy("timestamp", "desc")
@@ -1115,7 +988,6 @@
             input.value = `${formattedH}:${formattedM}`;
         }
 
-        // 投稿処理
         async function handlePost(event) {
             event.preventDefault();
 
