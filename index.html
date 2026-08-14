@@ -630,9 +630,16 @@
                         <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
                     </div>
 
+                    <!-- 方面・行先の選択と入力 -->
                     <div class="form-group">
-                        <label for="direction">方面 <span style="color:red;">*</span></label>
-                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
+                        <label for="direction">方向種別 & 方面・行先 <span style="color:red;">*</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="directionType" class="form-control" style="width: 110px;">
+                                <option value="方面">方面</option>
+                                <option value="行先">行先</option>
+                            </select>
+                            <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
+                        </div>
                     </div>
 
                     <!-- 編成番号 & 併結オプション -->
@@ -740,13 +747,17 @@
             </div>
         </section>
 
-        <!-- 5. 名前設定画面 -->
+        <!-- 5. 設定画面 -->
         <section id="account-view" class="view-section">
             <div class="section-header">
-                <h2>名前の設定</h2>
+                <h2>設定</h2>
             </div>
             
             <div class="form-card">
+                <div id="accountNoDisplay" style="font-size: 13px; color: #d0021b; font-weight: bold; margin-bottom: 15px;">
+                    アカウント番号: 読み込み中...
+                </div>
+
                 <h3 style="margin-top:0; font-size:16px; color:#333;">アプリ内ユーザー名</h3>
                 <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
                     投稿時などに表示される名前を設定します。
@@ -781,7 +792,7 @@
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
             <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
             <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
-            <button class="footer-btn" onclick="switchView('account-view', this)">名前<br>設定</button>
+            <button class="footer-btn" onclick="switchView('account-view', this)">設定</button>
         </nav>
     </footer>
 
@@ -808,14 +819,27 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
-            // 保存されているユーザー名をブラウザのローカルストレージから読み込み
+            initUserAccountInfo();
+        });
+
+        // アカウント番号と名前の初期化
+        function initUserAccountInfo() {
+            let accountNo = localStorage.getItem('meitetsu_account_no');
+            if (!accountNo) {
+                accountNo = 'No.' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('meitetsu_account_no', accountNo);
+            }
+            document.getElementById('accountNoDisplay').innerText = `アカウント作成番号: ${accountNo}`;
+
             const savedName = localStorage.getItem('meitetsu_user_name');
             if (savedName) {
                 document.getElementById('userNameInput').value = savedName;
+            } else {
+                document.getElementById('userNameInput').value = '名鉄ファン';
+                localStorage.setItem('meitetsu_user_name', '名鉄ファン');
             }
-        });
+        }
 
-        // ユーザー名のローカル保存（ブラウザ保存）
         function saveLocalUserName() {
             const nameInput = document.getElementById('userNameInput');
             const newName = nameInput.value.trim();
@@ -1049,9 +1073,14 @@
 
             const trainNum = document.getElementById('trainNumber').value.trim() || '指定なし';
             const station = document.getElementById('station').value.trim();
+            const directionType = document.getElementById('directionType').value; // 「方面」または「行先」
             const rawDirection = document.getElementById('direction').value.trim();
-            const directionFormatted = rawDirection.endsWith('方面') ? rawDirection : rawDirection + '（方面）';
+            
+            // 選択された種別（方面または行先）を付与
+            const directionFormatted = rawDirection.endsWith(directionType) ? rawDirection : `${rawDirection}${directionType}`;
+            
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
+            const authorName = localStorage.getItem('meitetsu_user_name') || '名鉄ファン';
 
             const now = new Date();
             const isHoliday = (selectedPostSchedule === 'holiday');
@@ -1067,6 +1096,7 @@
                 arrTime: arrTime,
                 depTime: depTime,
                 remarks: remarks,
+                authorName: authorName,
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
                 rawDate: dateStr,
                 isHoliday: isHoliday,
@@ -1122,6 +1152,7 @@
             let timelineHTML = '';
             matchingPosts.forEach(post => {
                 const timeText = getTimeDisplayString(post);
+                const author = post.authorName ? `投稿者: ${post.authorName}` : '';
                 timelineHTML += `
                     <div class="timeline-item">
                         <div style="font-weight:bold; color:#d0021b;">${timeText} - ${post.station}</div>
@@ -1129,7 +1160,7 @@
                             ${post.direction} | 編成: ${post.formation}
                         </div>
                         <div style="font-size:12px; color:#666; margin-top:2px;">
-                            備考: ${post.remarks} (${post.postDate})
+                            備考: ${post.remarks} / ${author} (${post.postDate})
                         </div>
                     </div>
                 `;
@@ -1153,6 +1184,7 @@
             }
 
             const timeText = getTimeDisplayString(post);
+            const authorText = post.authorName ? `投稿者: ${post.authorName}` : '投稿者: 名無し';
 
             return `
                 <div class="${cardClass}">
@@ -1170,8 +1202,9 @@
                     <div class="post-remarks">
                         <strong>備考:</strong> ${post.remarks}
                     </div>
-                    <div style="font-size: 11px; color: #888; text-align: right; margin-top: 6px;">
-                        ${post.isHoliday ? '【休日】' : '【平日】'} ${post.postDate}
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #888; margin-top: 6px;">
+                        <span>${authorText}</span>
+                        <span>${post.isHoliday ? '【休日】' : '【平日】'} ${post.postDate}</span>
                     </div>
                 </div>
             `;
@@ -1197,7 +1230,7 @@
             const todayStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
 
             const filteredPosts = postsData.filter(post => {
-                const combinedText = `${post.station} ${post.direction} ${post.trainNum} ${post.formation} ${post.remarks}`.toLowerCase();
+                const combinedText = `${post.station} ${post.direction} ${post.trainNum} ${post.formation} ${post.remarks} ${post.authorName || ''}`.toLowerCase();
                 const matchesKeyword = combinedText.includes(keyword);
 
                 let matchesDate = true;
