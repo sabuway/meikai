@@ -56,6 +56,68 @@
             margin-bottom: 15px;
         }
 
+        /* 最新情報画面内のタブ（マニュアル / お知らせ） */
+        .latest-tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .latest-tab-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #ffffff;
+            color: #333;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .latest-tab-btn.active {
+            background-color: #d0021b;
+            color: #ffffff;
+            border-color: #d0021b;
+        }
+
+        .latest-sub-section {
+            display: none;
+        }
+
+        .latest-sub-section.active {
+            display: block;
+        }
+
+        /* マニュアル内コンテンツスタイル */
+        .manual-section {
+            margin-bottom: 20px;
+        }
+        .manual-section:last-child {
+            margin-bottom: 0;
+        }
+        .manual-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #d0021b;
+            border-bottom: 2px solid #d0021b;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+        .manual-body {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+        }
+        .manual-subheading {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
         /* お知らせカード */
         .news-item {
             border-bottom: 1px solid #eee;
@@ -593,13 +655,59 @@
     <main>
         <!-- 1. 最新情報画面 -->
         <section id="latest-view" class="view-section active">
-            <h2 style="font-size: 18px; color: #333;">最新のお知らせ</h2>
-            <div class="info-card">
-                <div class="news-item">
-                    <div class="news-date">8月14日</div>
-                    <div class="news-title">「名鉄回送情報共有」公開</div>
-                    <div class="news-body">
-                        名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
+            <!-- 最新情報内タブ切り替え (説明 / お知らせ) -->
+            <div class="latest-tab-container">
+                <button class="latest-tab-btn active" onclick="selectLatestTab('manual', this)">(説明) マニュアル・操作方法</button>
+                <button class="latest-tab-btn" onclick="selectLatestTab('news', this)">お知らせ</button>
+            </div>
+
+            <!-- マニュアル・操作方法セクション -->
+            <div id="latest-sub-manual" class="latest-sub-section active">
+                <div class="form-card">
+                    <div class="manual-section">
+                        <div class="manual-title">はじめに</div>
+                        <div class="manual-body">
+                            このサイトは名鉄(名古屋鉄道)の回送の情報を共有するプラットフォームです。2026年7月11日以降の回送電車の目撃、スジの提供共有します。2026年7月11日以前の回送まとめは今後皆様からの提供を基に整備していく予定ですので実装までしばらくお待ちください。
+                        </div>
+                    </div>
+
+                    <div class="manual-section" style="margin-top: 18px;">
+                        <div class="manual-title">ルール</div>
+                        <div class="manual-body">
+                            架空のものや予想のスジの提供は禁止です。また、回送時刻は目視で確認する際もあるので1～3分前後のずれは承知の上ご利用ください。また、こちらの提供している情報からの損益については責任を取りかねますのでご了承ください。
+                        </div>
+                    </div>
+
+                    <div class="manual-section" style="margin-top: 18px;">
+                        <div class="manual-title">使い方</div>
+                        <div class="manual-subheading">最新情報について</div>
+                        <div class="manual-body">
+                            最新情報にはサイトのお知らせから名鉄の情報まで多くのことを掲載していきます。
+                        </div>
+
+                        <div class="manual-subheading">投稿について</div>
+                        <div class="manual-body">
+                            投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。
+                        </div>
+
+                        <div class="manual-subheading">回送所定について</div>
+                        <div class="manual-body">
+                            2026年7月11日改正後の回送の所定を提供していきます。皆様から提供された情報をもに順次入力していきます。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- お知らせセクション -->
+            <div id="latest-sub-news" class="latest-sub-section">
+                <h2 style="font-size: 18px; color: #333; margin-top: 0;">最新のお知らせ</h2>
+                <div class="info-card">
+                    <div class="news-item">
+                        <div class="news-date">8月14日</div>
+                        <div class="news-title">「名鉄回送情報共有」公開</div>
+                        <div class="news-body">
+                            名鉄回送情報共有Webアプリを公開しました。回送情報の検索や運用履歴の確認が可能です。
+                        </div>
                     </div>
                 </div>
             </div>
@@ -871,6 +979,18 @@
             }
         }
 
+        function selectLatestTab(tabType, btnElement) {
+            document.querySelectorAll('.latest-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.latest-sub-section').forEach(s => s.classList.remove('active'));
+
+            btnElement.classList.add('active');
+            if (tabType === 'manual') {
+                document.getElementById('latest-sub-manual').classList.add('active');
+            } else if (tabType === 'news') {
+                document.getElementById('latest-sub-news').classList.add('active');
+            }
+        }
+
         function selectPostSchedule(scheduleType) {
             selectedPostSchedule = scheduleType;
             const btnWeekday = document.getElementById('btn-post-weekday');
@@ -1078,7 +1198,6 @@
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
             
-            // 選択された種別（方面または行先）を付与
             const directionFormatted = rawDirection.endsWith(selectedDirectionType) ? rawDirection : `${rawDirection}（${selectedDirectionType}）`;
             
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
