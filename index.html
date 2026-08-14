@@ -550,12 +550,20 @@
         }
 
         .post-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 14px;
             color: #333;
             margin-bottom: 8px;
+        }
+
+        .post-details .left-info {
+            text-align: left;
+        }
+
+        .post-details .right-info {
+            text-align: right;
         }
 
         .post-remarks {
@@ -1028,7 +1036,6 @@
 
             } catch (error) {
                 console.error("ユーザー名重複確認エラー: ", error);
-                // オフライン時などのフォールバック
             }
 
             localStorage.setItem('meitetsu_user_name', newName);
@@ -1338,7 +1345,6 @@
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
             
-            // 行先の場合は「（行き）」、方面の場合は「（方面）」に変換
             const suffix = selectedDirectionType === '行先' ? '（行き）' : '（方面）';
             const directionFormatted = rawDirection.endsWith('（方面）') || rawDirection.endsWith('（行き）') ? rawDirection : `${rawDirection}${suffix}`;
             
@@ -1458,7 +1464,7 @@
             return `
                 <div class="${cardClass}">
                     <div class="post-header">
-                        <span class="post-title">${post.station} ➔ ${post.direction}</span>
+                        <span class="post-title">${post.trainNum}</span>
                         <div class="post-time-container">
                             ${historyBtnHTML}
                             ${scheduleBadge}
@@ -1466,8 +1472,8 @@
                         </div>
                     </div>
                     <div class="post-details">
-                        <div><strong>編成:</strong> ${post.formation}</div>
-                        <div><strong>列番:</strong> ${post.trainNum}</div>
+                        <div class="left-info"><strong>行先/方面:</strong> ${post.station} ➔ ${post.direction}</div>
+                        <div class="right-info"><strong>編成:</strong> ${post.formation}</div>
                     </div>
                     <div class="post-remarks">
                         <strong>備考:</strong> ${post.remarks}
