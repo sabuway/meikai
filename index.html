@@ -581,6 +581,10 @@
             color: #ffffff;
         }
     </style>
+
+    <!-- Firebase SDKの読み込み (Compat版) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -710,7 +714,7 @@
             </div>
 
             <div id="history-list">
-                <p class="empty-msg">過去の投稿履歴はありません。</p>
+                <p class="empty-msg">読み込み中...</p>
             </div>
         </section>
 
@@ -771,7 +775,20 @@
     </footer>
 
     <script>
-        const postsData = [];
+        // --- Firebase 初期設定 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCn4NARVzzkW1P-BcCvbHiW30KmPGkol3M",
+            authDomain: "meitetsu-kaisou-app.firebaseapp.com",
+            projectId: "meitetsu-kaisou-app",
+            storageBucket: "meitetsu-kaisou-app.firebasestorage.app",
+            messagingSenderId: "231322663764",
+            appId: "1:231322663764:web:9958046e4ab2a31df7e6c1",
+            measurementId: "G-92W6CEDM9J"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let postsData = [];
         let currentFilter = 'all';
         let currentSyoteiDay = 'weekday';
         let selectedPostSchedule = null;
@@ -779,6 +796,29 @@
         // 併結管理用変数 (最小2, 最大4)
         let isCouplingActive = false;
         let couplingCount = 2; 
+
+        // ページ読み込み時にFirestoreからデータを取得開始
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchPostsFromFirestore();
+        });
+
+        // Firestoreからデータをリアルタイムで取得する関数
+        function fetchPostsFromFirestore() {
+            db.collection("posts")
+              .orderBy("timestamp", "desc")
+              .onSnapshot((snapshot) => {
+                  postsData = [];
+                  snapshot.forEach((doc) => {
+                      const data = doc.data();
+                      data.id = doc.id; // FirestoreのドキュメントIDを保持
+                      postsData.push(data);
+                  });
+                  filterHistory();
+              }, (error) => {
+                  console.error("データ取得エラー: ", error);
+                  document.getElementById('history-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
+              });
+        }
 
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
@@ -819,7 +859,7 @@
                 formationInput.removeAttribute('required');
                 formationInput.value = '';
                 couplingArea.classList.add('active');
-                couplingCount = 2; // 初期数2
+                couplingCount = 2; 
                 renderCouplingFields();
             } else {
                 toggleBtn.innerText = 'OFF';
@@ -830,7 +870,6 @@
             }
         }
 
-        // 併結入力欄の描画（例: 3501, 3101, 3151, 9101）
         const couplingExamples = ["3501", "3101", "3151", "9101"];
 
         function renderCouplingFields() {
@@ -843,11 +882,9 @@
                     <input type="text" class="form-control coupling-field" inputmode="numeric" pattern="[0-9]{4}" placeholder="${placeholderVal}" maxlength="4" oninput="onlyNumbers(this)">
                 `;
             }
-
             container.innerHTML = html;
         }
 
-        // 併結欄を増やす（最大4）
         function addCouplingField() {
             if (couplingCount < 4) {
                 couplingCount++;
@@ -855,7 +892,6 @@
             }
         }
 
-        // 併結欄を減らす（最小2）
         function removeCouplingField() {
             if (couplingCount > 2) {
                 couplingCount--;
@@ -918,7 +954,8 @@
             input.value = `${formattedH}:${formattedM}`;
         }
 
-        function handlePost(event) {
+        // 投稿処理（Firestoreへ保存）
+        async function handlePost(event) {
             event.preventDefault();
 
             if (!selectedPostSchedule) {
@@ -933,7 +970,6 @@
                     alert('編成番号は4桁の数字で入力してください。');
                     return;
                 }
-                // 左にト、右にキを付与
                 formationFormatted = 'ト' + formationInput + 'Fキ';
             } else {
                 const fields = document.querySelectorAll('.coupling-field');
@@ -943,11 +979,11 @@
                 for (let field of fields) {
                     const val = field.value.trim();
                     if (!val || (val.length !== 3 && val.length !== 4)) {
-                        alert('警告、編成の入力欄に同じ編成番号を検知しました。もう一度確認してください。');
+                        alert('警告、編成の入力欄に正しい編成番号を入力してください。');
                         return;
                     }
                     if (seenVals.has(val)) {
-                        alert('警告、編成の入力欄に同じ編成番号を検知しました。もう一度確認してください。');
+                        alert('警告、編成の入力欄に同じ編成番号を検知しました。');
                         return;
                     }
                     seenVals.add(val);
@@ -958,7 +994,6 @@
                     alert('併結有の場合は、最低2つの編成番号を入力してください。');
                     return;
                 }
-                // 左側にト、右側にキを付与して結合
                 formationFormatted = 'ト' + validVals.join('+') + 'キ';
             }
 
@@ -1001,19 +1036,25 @@
                 remarks: remarks,
                 postDate: `${now.getMonth() + 1}/${now.getDate()} ${timeStr}`,
                 rawDate: dateStr,
-                isHoliday: isHoliday
+                isHoliday: isHoliday,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() // サーバー側での正確な並び替え用
             };
 
-            postsData.unshift(newPost);
-            filterHistory();
+            try {
+                // Firestoreの "posts" コレクションに追加
+                await db.collection("posts").add(newPost);
 
-            document.getElementById('postForm').reset();
-            if (isCouplingActive) {
-                toggleCoupling();
+                document.getElementById('postForm').reset();
+                if (isCouplingActive) {
+                    toggleCoupling();
+                }
+                selectPostSchedule(null);
+                alert('投稿が完了し、データベースに保存されました！');
+                switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
+            } catch (error) {
+                console.error("投稿エラー: ", error);
+                alert('投稿の保存に失敗しました。もう一度お試しください。');
             }
-            selectPostSchedule(null);
-            alert('投稿が完了しました！');
-            switchView('history-view', document.querySelectorAll('.footer-btn')[2]);
         }
 
         function getTrainNumCount(trainNum, isHoliday) {
