@@ -525,6 +525,24 @@
             cursor: pointer;
         }
 
+        .schedule-badge-weekday {
+            font-size: 11px;
+            background-color: #e9ecef;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .schedule-badge-holiday {
+            font-size: 11px;
+            background-color: #ffccd5;
+            color: #d0021b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
         .post-time {
             font-size: 13px;
             color: #444;
@@ -951,7 +969,7 @@
             }
         }
 
-        function saveLocalUserName() {
+        async function saveLocalUserName() {
             const nameInput = document.getElementById('userNameInput');
             const newName = nameInput.value.trim();
 
@@ -978,6 +996,39 @@
                     alert(`【エラー】名前の変更は1週間に1回のみ可能です。あと約 ${remainingDays} 日お待ちください。`);
                     return;
                 }
+            }
+
+            // 重複チェック（他の人がすでに同じ名前を使っていないか確認）
+            try {
+                const querySnapshot = await db.collection("users").where("name", "==", newName).get();
+                if (!querySnapshot.empty) {
+                    let isMyPreviousRecord = false;
+                    querySnapshot.forEach(doc => {
+                        if (doc.id === localStorage.getItem('meitetsu_user_id')) {
+                            isMyPreviousRecord = true;
+                        }
+                    });
+                    if (!isMyPreviousRecord) {
+                        alert('【エラー】そのユーザー名はすでに他のユーザーに使用されています。別の名前を設定してください。');
+                        return;
+                    }
+                }
+
+                // ユーザーIDの管理（未作成なら発行）
+                let userId = localStorage.getItem('meitetsu_user_id');
+                if (!userId) {
+                    userId = db.collection("users").doc().id;
+                    localStorage.setItem('meitetsu_user_id', userId);
+                }
+
+                await db.collection("users").doc(userId).set({
+                    name: newName,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+            } catch (error) {
+                console.error("ユーザー名重複確認エラー: ", error);
+                // オフライン時などのフォールバック
             }
 
             localStorage.setItem('meitetsu_user_name', newName);
@@ -1070,7 +1121,6 @@
                 toggleBtn.innerText = 'ON';
                 toggleBtn.classList.add('active');
                 
-                // 単体入力を無効化
                 if (isSingleUnknownActive) {
                     toggleSingleUnknown();
                 }
@@ -1288,7 +1338,9 @@
             const station = document.getElementById('station').value.trim();
             const rawDirection = document.getElementById('direction').value.trim();
             
-            const directionFormatted = rawDirection.endsWith(selectedDirectionType) ? rawDirection : `${rawDirection}（${selectedDirectionType}）`;
+            // 行先の場合は「（行き）」、方面の場合は「（方面）」に変換
+            const suffix = selectedDirectionType === '行先' ? '（行き）' : '（方面）';
+            const directionFormatted = rawDirection.endsWith('（方面）') || rawDirection.endsWith('（行き）') ? rawDirection : `${rawDirection}${suffix}`;
             
             const remarks = document.getElementById('remarks').value.trim() || 'なし';
 
@@ -1401,6 +1453,7 @@
 
             const timeText = getTimeDisplayString(post);
             const authorText = post.authorName ? `投稿者: ${post.authorName}` : '投稿者: 名無し';
+            const scheduleBadge = post.isHoliday ? '<span class="schedule-badge-holiday">休日</span>' : '<span class="schedule-badge-weekday">平日</span>';
 
             return `
                 <div class="${cardClass}">
@@ -1408,19 +1461,20 @@
                         <span class="post-title">${post.station} ➔ ${post.direction}</span>
                         <div class="post-time-container">
                             ${historyBtnHTML}
+                            ${scheduleBadge}
                             <span class="post-time">${timeText}</span>
                         </div>
                     </div>
                     <div class="post-details">
-                        <div><strong>列番:</strong> ${post.trainNum}</div>
                         <div><strong>編成:</strong> ${post.formation}</div>
+                        <div><strong>列番:</strong> ${post.trainNum}</div>
                     </div>
                     <div class="post-remarks">
                         <strong>備考:</strong> ${post.remarks}
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #888; margin-top: 6px;">
                         <span>${authorText}</span>
-                        <span>${post.isHoliday ? '【休日】' : '【平日】'} ${post.postDate}</span>
+                        <span>${post.postDate}</span>
                     </div>
                 </div>
             `;
