@@ -135,7 +135,7 @@
     <script>
         // パスワード認証チェック（セッション保持・失敗時は外部へ逃がす）
         if (sessionStorage.getItem("adminAuth") !== "true") {
-            const pass = prompt("管理者パスワード（じゅん）を入力してください");
+            const pass = prompt("管理者パスワードを入力してください");
             if (pass !== "じゅん" && pass !== "admin123") { // パスワード設定
                 alert("パスワードが違います");
                 window.location.href = "https://www.meitetsu.co.jp/";
@@ -146,7 +146,7 @@
 
         // Firebase初期化（APIキーはご自身の新しいものに書き換えてください）
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
+            apiKey: "AIzaSyCiIeI-zgZuz14H1eUGzZQ-M_VaYJSHhEg"
             authDomain: "meitetsu-kaisou-app.firebaseapp.com",
             projectId: "meitetsu-kaisou-app",
             storageBucket: "meitetsu-kaisou-app.firebasestorage.app",
