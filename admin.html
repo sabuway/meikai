@@ -144,9 +144,9 @@
             }
         }
 
-        // Firebase初期化
+        // Firebase初期化（APIキーはご自身の新しいものに書き換えてください）
         const firebaseConfig = {
-            apiKey: "AIzaSyCn4NARVzzkW1P-BcCvbHiW30KmPGkol3M",
+            apiKey: "YOUR_API_KEY",
             authDomain: "meitetsu-kaisou-app.firebaseapp.com",
             projectId: "meitetsu-kaisou-app",
             storageBucket: "meitetsu-kaisou-app.firebasestorage.app",
@@ -161,6 +161,17 @@
         function scrollToSection(id) {
             document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
         }
+
+        // Firebase初期化（APIキーはご自身の新しいものに書き換えてください）
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",AIzaSyCiIeI-zgZuz14H1eUGzZQ-M_VaYJSHhEg
+            authDomain: "meitetsu-kaisou-app.firebaseapp.com",
+            projectId: "meitetsu-kaisou-app",
+            storageBucket: "meitetsu-kaisou-app.firebasestorage.app",
+            messagingSenderId: "231322663764",
+            appId: "1:231322663764:web:9958046e4ab2a31df7e6c1",
+            measurementId: "G-92W6CEDM9J"
+        };
 
         // 駅の時刻入力行の動的追加・切り替え処理
         function addStationRow() {
@@ -269,20 +280,20 @@
         document.getElementById('timetableForm').addEventListener('submit', (e) => {
             e.preventDefault();
             alert("所定データを登録しました（データベース連携可能）");
-            // 管理画面での投稿削除処理
-async function deletePost(docId) {
-    if (!confirm('この投稿を削除してもよろしいですか？')) return;
-
-    try {
-        await db.collection("posts").doc(docId).delete();
-        alert('投稿を削除しました。');
-        // onSnapshotを使用していれば自動的に画面が更新されます
-    } catch (error) {
-        console.error("削除エラー: ", error);
-        alert('削除に失敗しました。');
-    }
-}
         });
+
+        // 投稿削除処理
+        async function deletePost(docId) {
+            if (!confirm('この投稿を削除してもよろしいですか？')) return;
+
+            try {
+                await db.collection("posts").doc(docId).delete();
+                alert('投稿を削除しました。');
+            } catch (error) {
+                console.error("削除エラー: ", error);
+                alert('削除に失敗しました。');
+            }
+        }
     </script>
 </body>
 </html>
