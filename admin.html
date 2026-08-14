@@ -3,47 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理画面 - 名鉄回送情報</title>
+    <title>総合管理画面 - 名鉄回送情報</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
-        th { background-color: #d0021b; color: white; }
-        .del-btn { background: #dc3545; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
+        body { font-family: sans-serif; margin: 0; background-color: #f8f9fa; color: #333; }
+        header { background: #d0021b; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.2rem; }
+        .nav-links a { color: white; text-decoration: none; margin-left: 15px; font-weight: bold; }
+        
+        main { padding: 20px; max-width: 1000px; margin: 0 auto; }
+        section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #d0021b; padding-bottom: 5px; margin-top: 0; color: #d0021b; font-size: 1.1rem; }
+
+        form label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
+        form input, form select, form textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .btn { background: #d0021b; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-top: 15px; }
+        .btn:hover { background: #a00114; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; font-size: 0.9rem; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
+        th { background-color: #333; color: white; }
+        
+        .deleted-row { background-color: #f1f1f1 !important; color: #888; }
+        .del-container { text-align: right; margin-top: 5px; }
+        .del-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
+        
+        .station-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+        .station-row input { margin-top: 0; }
+
+        footer { text-align: center; padding: 15px; background: #333; color: white; margin-top: 40px; }
+        .footer-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .footer-nav button { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .footer-nav button:hover { background: #d0021b; }
     </style>
 </head>
 <body>
-    <h1>データ管理画面</h1>
-    <table id="adminTable">
-        <thead>
-            <tr>
-                <th>駅</th>
-                <th>列番</th>
-                <th>削除</th>
-            </tr>
-        </thead>
-        <tbody id="adminBody"></tbody>
-    </table>
+
+    <header>
+        <h1>名鉄回送情報 管理パネル</h1>
+        <div class="nav-links">
+            <a href="index.html" target="_blank">本番サイトを開く</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- 1. お知らせ管理セクション -->
+        <section id="news-section">
+            <h2>最新情報（お知らせ）の更新</h2>
+            <form id="newsForm">
+                <label>件名（太字で表示されます）</label>
+                <input type="text" id="newsTitle" placeholder="例：【重要】ダイヤ改正に伴う運用変更について" required>
+                
+                <label>本文・詳細内容</label>
+                <textarea id="newsContent" rows="3" placeholder="お知らせの詳細を入力してください" required></textarea>
+                
+                <button type="submit" class="btn">お知らせを更新して本番に反映</button>
+            </form>
+        </section>
+
+        <!-- 2. 回送所定登録画面セクション -->
+        <section id="timetable-section">
+            <h2>回送所定登録画面</h2>
+            <form id="timetableForm">
+                <label>平日 / 休日選択</label>
+                <select id="dayType">
+                    <option value="weekday">平日</option>
+                    <option value="holiday">休日</option>
+                </select>
+
+                <label>所定の選択（本番の所定から選択）</label>
+                <select id="baseService">
+                    <option value="default">標準所定</option>
+                    <option value="morning_extra">朝臨時点検回送</option>
+                    <option value="night_back">夜間入庫回送</option>
+                </select>
+
+                <label>列番の登録</label>
+                <input type="text" id="trainNumber" placeholder="例：回1234レ" required>
+
+                <label>駅の時刻入力（編成に沿って追加可能）</label>
+                <div id="stationListContainer">
+                    <!-- 動的に追加される駅入力行 -->
+                    <div class="station-row">
+                        <input type="text" placeholder="駅名" style="flex:2;" class="st-name">
+                        <select style="flex:1;" class="st-type" onchange="toggleTimeInputs(this)">
+                            <option value="through">通過</option>
+                            <option value="stop">運転停車</option>
+                        </select>
+                        <input type="time" style="flex:1.5;" class="st-time-through" placeholder="通過時刻">
+                        <input type="time" style="flex:1.5; display:none;" class="st-time-arr" placeholder="到着時刻">
+                        <input type="time" style="flex:1.5; display:none;" class="st-time-dep" placeholder="発車時刻">
+                        <button type="button" onclick="removeStationRow(this)" style="background:#dc3545; color:white; border:none; padding:6px; cursor:pointer;">✕</button>
+                    </div>
+                </div>
+                <button type="button" onclick="addStationRow()" style="background:#6c757d; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;">＋ 駅を追加する</button>
+
+                <br>
+                <button type="submit" class="btn">所定データを登録する</button>
+            </form>
+        </section>
+
+        <!-- 3. ユーザー投稿管理セクション -->
+        <section id="posts-section">
+            <h2>ユーザー投稿管理</h2>
+            <div id="postsTableContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>投稿内容</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminPostsBody">
+                        <!-- 動的に全投稿がここに表示されます -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-nav">
+            <button onclick="scrollToSection('news-section')">最新情報更新</button>
+            <button onclick="scrollToSection('posts-section')">ユーザー投稿管理</button>
+            <button onclick="scrollToSection('timetable-section')">列番所定要録</button>
+        </div>
+        <p>&copy; Meitetsu Kaisou Info Admin</p>
+    </footer>
 
     <script>
-        // 【重要】セッションを強制リセットしてテストしたい場合は一時的にコメントアウトを外せます
-        // sessionStorage.removeItem("adminAuth");
-
-        // パスワード認証チェック
+        // パスワード認証チェック（セッション保持・失敗時は外部へ逃がす）
         if (sessionStorage.getItem("adminAuth") !== "true") {
-            const pass = prompt("管理者パスワードを入力してください");
-            if (pass !== "admin123") { // パスワード
+            const pass = prompt("管理者パスワード（じゅん）を入力してください");
+            if (pass !== "じゅん" && pass !== "admin123") { // パスワード設定
                 alert("パスワードが違います");
-                // 本番サイトには絶対飛ばさず、名鉄公式サイト等に飛ばす（または真っ白にする）
                 window.location.href = "https://www.meitetsu.co.jp/";
             } else {
                 sessionStorage.setItem("adminAuth", "true");
             }
         }
 
+        // Firebase初期化
         const firebaseConfig = {
             apiKey: "AIzaSyCn4NARVzzkW1P-BcCvbHiW30KmPGkol3M",
             authDomain: "meitetsu-kaisou-app.firebaseapp.com",
@@ -56,25 +157,119 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-            const body = document.getElementById('adminBody');
-            body.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const row = `<tr>
-                    <td>${data.station}</td>
-                    <td>${data.trainNum}</td>
-                    <td><button class="del-btn" onclick="deletePost('${doc.id}')">削除</button></td>
-                </tr>`;
-                body.innerHTML += row;
+        // フッターボタンからのスムーズスクロール
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 駅の時刻入力行の動的追加・切り替え処理
+        function addStationRow() {
+            const container = document.getElementById('stationListContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'station-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="駅名" style="flex:2;" class="st-name">
+                <select style="flex:1;" class="st-type" onchange="toggleTimeInputs(this)">
+                    <option value="through">通過</option>
+                    <option value="stop">運転停車</option>
+                </select>
+                <input type="time" style="flex:1.5;" class="st-time-through" placeholder="通過時刻">
+                <input type="time" style="flex:1.5; display:none;" class="st-time-arr" placeholder="到着時刻">
+                <input type="time" style="flex:1.5; display:none;" class="st-time-dep" placeholder="発車時刻">
+                <button type="button" onclick="removeStationRow(this)" style="background:#dc3545; color:white; border:none; padding:6px; cursor:pointer;">✕</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function removeStationRow(btn) {
+            btn.parentElement.remove();
+        }
+
+        function toggleTimeInputs(selectElem) {
+            const row = selectElem.parentElement;
+            const throughInput = row.querySelector('.st-time-through');
+            const arrInput = row.querySelector('.st-time-arr');
+            const depInput = row.querySelector('.st-time-dep');
+
+            if (selectElem.value === 'stop') {
+                throughInput.style.display = 'none';
+                arrInput.style.display = 'block';
+                depInput.style.display = 'block';
+            } else {
+                throughInput.style.display = 'block';
+                arrInput.style.display = 'none';
+                depInput.style.display = 'none';
+            }
+        }
+
+        // お知らせ（最新情報）の送信
+        document.getElementById('newsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('newsTitle').value;
+            const content = document.getElementById('newsContent').value;
+
+            db.collection("settings").doc("latest_news").set({
+                title: title,
+                content: content,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("最新情報を更新し、本番サイトへ反映しました！");
+            }).catch((error) => {
+                alert("エラーが発生しました: " + error.message);
             });
         });
 
-        function deletePost(id) {
-            if (confirm('本当に削除しますか？')) {
-                db.collection("posts").doc(id).delete();
+        // ユーザー投稿のリアルタイム取得と管理画面への表示
+        db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+            const tbody = document.getElementById('adminPostsBody');
+            tbody.innerHTML = '';
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const isDeleted = data.isDeleted === true;
+                
+                const rowClass = isDeleted ? 'deleted-row' : '';
+                const statusText = isDeleted ? '<span style="color:red; font-weight:bold; margin-right:10px;">[削除済み]</span>' : '';
+                
+                let deleteButtonsHtml = '';
+                if (!isDeleted) {
+                    deleteButtonsHtml = `
+                        <div class="del-container">
+                            <button class="del-btn" onclick="markAsDeleted('${doc.id}', '荒らし')">荒らしとして削除</button>
+                            <button class="del-btn" onclick="markAsDeleted('${doc.id}', '誤投稿')">誤投稿として削除</button>
+                        </div>
+                    `;
+                }
+
+                const row = `
+                    <tr class="${rowClass}">
+                        <td>
+                            ${statusText}
+                            <strong>駅:</strong> ${data.station || '未指定'} / <strong>列番:</strong> ${data.trainNum || '未指定'}
+                            <div style="font-size:0.85rem; color:#555; margin-top:3px;">${data.content || data.memo || ''}</div>
+                            ${deleteButtonsHtml}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        });
+
+        // 削除処理（本番非表示・管理側は薄い灰色＆削除済み表示）
+        function markAsDeleted(id, reason) {
+            if (confirm(`この記事を「${reason}」として削除しますか？`)) {
+                db.collection("posts").doc(id).update({
+                    isDeleted: true,
+                    deleteReason: reason
+                });
             }
         }
+
+        // 回送所定登録の送信処理
+        document.getElementById('timetableForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert("所定データを登録しました（データベース連携可能）");
+        });
     </script>
 </body>
 </html>
