@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -54,6 +55,36 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             margin-bottom: 15px;
+        }
+
+        /* 投稿欄のサブタブ切替（目撃情報 vs スジ投稿） */
+        .sub-tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .sub-tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+            text-align: center;
+        }
+        .sub-tab-btn.active {
+            background-color: #d0021b;
+            color: #ffffff;
+            border-color: #d0021b;
+        }
+        .sub-form-section {
+            display: none;
+        }
+        .sub-form-section.active {
+            display: block;
         }
 
         /* マニュアル内コンテンツスタイル */
@@ -377,6 +408,25 @@
             cursor: not-allowed;
         }
 
+        /* スジ投稿用 駅ブロックのスタイル */
+        .suji-station-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .suji-station-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+        }
+
         /* 検索・フィルターエリア */
         .search-box-card {
             background: #ffffff;
@@ -528,6 +578,49 @@
             font-size: 13px;
             color: #555;
             margin-top: 8px;
+        }
+
+        /* スジ一覧カード用スタイル（ご要望の形式対応） */
+        .suji-card {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 12px;
+            cursor: pointer;
+            border-left: 5px solid #d0021b;
+            transition: transform 0.1s;
+        }
+        .suji-card:hover {
+            transform: scale(1.01);
+        }
+        .suji-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .suji-train-num {
+            text-align: left;
+            color: #d0021b;
+        }
+        .suji-syotei {
+            text-align: right;
+            color: #333;
+        }
+
+        /* モーダル内スジ詳細タイムライン */
+        .suji-timeline-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .suji-timeline-row:last-child {
+            border-bottom: none;
         }
 
         .empty-msg {
@@ -695,7 +788,7 @@
 
                     <div class="manual-subheading">投稿について</div>
                     <div class="manual-body">
-                        投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。編成が不明な場合は「不明」ボタンをご活用ください。
+                        投稿は「回送目撃情報」と「スジ投稿」の2つに分かれています。目撃情報は履歴に残り、スジ投稿は「スジ」画面に反映されます。
                     </div>
 
                     <div class="manual-subheading">スジについて</div>
@@ -706,97 +799,173 @@
             </div>
         </section>
 
-        <!-- 3. 投稿欄画面 -->
+        <!-- 3. 投稿欄画面 (回送目撃情報 / スジ投稿 分割) -->
         <section id="post-view" class="view-section">
             <div class="form-card">
-                <h2 style="margin-top:0; font-size:18px; color:#d0021b;">回送情報の投稿</h2>
-                <form id="postForm" onsubmit="handlePost(event)">
+                <h2 style="margin-top:0; font-size:18px; color:#d0021b;">情報の投稿</h2>
+                
+                <!-- サブタブ切替ボタン -->
+                <div class="sub-tab-container">
+                    <button type="button" class="sub-tab-btn active" id="subTabWitnessBtn" onclick="switchSubTab('witness')">回送目撃情報</button>
+                    <button type="button" class="sub-tab-btn" id="subTabSujiBtn" onclick="switchSubTab('suji')">スジ投稿</button>
+                </div>
 
-                    <!-- 平日/休日 ダイヤ選択 -->
-                    <div class="form-group">
-                        <label>ダイヤ種別 <span style="color:red;">*</span></label>
-                        <div class="schedule-btn-group">
-                            <button type="button" class="schedule-btn" id="btn-post-weekday" onclick="selectPostSchedule('weekday')">平日ダイヤ</button>
-                            <button type="button" class="schedule-btn" id="btn-post-holiday" onclick="selectPostSchedule('holiday')">休日ダイヤ</button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="trainNumber" class="form-control" placeholder="例: K2391S" maxlength="8">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="station">確認駅 <span style="color:red;">*</span></label>
-                        <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
-                    </div>
-
-                    <!-- 方面・行先の選択ボタンと入力 -->
-                    <div class="form-group">
-                        <label>方面 / 行先 <span style="color:red;">*</span></label>
-                        <div class="direction-btn-group" style="margin-bottom: 8px;">
-                            <button type="button" class="direction-type-btn" id="btn-dir-houmen" onclick="selectDirectionType('方面')">方面</button>
-                            <button type="button" class="direction-type-btn" id="btn-dir-yukisaki" onclick="selectDirectionType('行先')">行先</button>
-                        </div>
-                        <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
-                    </div>
-
-                    <!-- 編成番号 & 併結オプション -->
-                    <div class="form-group">
-                        <label for="formation">編成番号 <span style="color:red;">*</span></label>
-                        <div class="single-formation-wrapper">
-                            <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
-                            <button type="button" id="singleUnknownBtn" class="unknown-toggle-btn" onclick="toggleSingleUnknown()">不明</button>
+                <!-- A. 回送目撃情報フォーム -->
+                <div id="witnessFormSection" class="sub-form-section active">
+                    <form id="postForm" onsubmit="handlePost(event)">
+                        <!-- 平日/休日 ダイヤ選択 -->
+                        <div class="form-group">
+                            <label>ダイヤ種別 <span style="color:red;">*</span></label>
+                            <div class="schedule-btn-group">
+                                <button type="button" class="schedule-btn" id="btn-post-weekday" onclick="selectPostSchedule('weekday')">平日ダイヤ</button>
+                                <button type="button" class="schedule-btn" id="btn-post-holiday" onclick="selectPostSchedule('holiday')">休日ダイヤ</button>
+                            </div>
                         </div>
                         
-                        <div class="coupling-option-container">
-                            <span class="coupling-desc">併結有</span>
-                            <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
+                        <div class="form-group">
+                            <label for="trainNumber">列番 <span class="optional-badge">任意</span></label>
+                            <input type="text" id="trainNumber" class="form-control" placeholder="例: K2391S" maxlength="8">
                         </div>
 
-                        <div id="couplingInputsArea" class="coupling-inputs-area">
-                            <div class="coupling-guide-header">
-                                <span>ト方</span>
-                                <span>キ方</span>
+                        <div class="form-group">
+                            <label for="station">確認駅 <span style="color:red;">*</span></label>
+                            <input type="text" id="station" class="form-control" placeholder="例: 須ヶ口" maxlength="30" required>
+                        </div>
+
+                        <!-- 方面・行先の選択ボタンと入力 -->
+                        <div class="form-group">
+                            <label>方面 / 行先 <span style="color:red;">*</span></label>
+                            <div class="direction-btn-group" style="margin-bottom: 8px;">
+                                <button type="button" class="direction-type-btn" id="btn-dir-houmen" onclick="selectDirectionType('方面')">方面</button>
+                                <button type="button" class="direction-type-btn" id="btn-dir-yukisaki" onclick="selectDirectionType('行先')">行先</button>
                             </div>
-                            <div class="coupling-row-wrapper">
-                                <div id="couplingInputsList" class="coupling-row-horizontal"></div>
-                                <div class="coupling-actions">
-                                    <button type="button" class="coupling-action-btn btn-add-green" onclick="addCouplingField()">＋</button>
-                                    <button type="button" class="coupling-action-btn btn-remove-red" onclick="removeCouplingField()">－</button>
+                            <input type="text" id="direction" class="form-control" placeholder="例: 犬山" maxlength="30" required>
+                        </div>
+
+                        <!-- 編成番号 & 併結オプション -->
+                        <div class="form-group">
+                            <label for="formation">編成番号 <span style="color:red;">*</span></label>
+                            <div class="single-formation-wrapper">
+                                <input type="text" id="formation" class="form-control" inputmode="numeric" pattern="[0-9]{4}" placeholder="例: 3501" maxlength="4" oninput="onlyNumbers(this)" required>
+                                <button type="button" id="singleUnknownBtn" class="unknown-toggle-btn" onclick="toggleSingleUnknown()">不明</button>
+                            </div>
+                            
+                            <div class="coupling-option-container">
+                                <span class="coupling-desc">併結有</span>
+                                <button type="button" id="couplingToggleBtn" class="coupling-toggle-btn" onclick="toggleCoupling()">OFF</button>
+                            </div>
+
+                            <div id="couplingInputsArea" class="coupling-inputs-area">
+                                <div class="coupling-guide-header">
+                                    <span>ト方</span>
+                                    <span>キ方</span>
+                                </div>
+                                <div class="coupling-row-wrapper">
+                                    <div id="couplingInputsList" class="coupling-row-horizontal"></div>
+                                    <div class="coupling-actions">
+                                        <button type="button" class="coupling-action-btn btn-add-green" onclick="addCouplingField()">＋</button>
+                                        <button type="button" class="coupling-action-btn btn-remove-red" onclick="removeCouplingField()">－</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <p class="time-condition-note">※ 通過・到着・発車のうち少なくとも1つの入力が必要です</p>
+                        <p class="time-condition-note">※ 通過・到着・発車のうち少なくとも1つの入力が必要です</p>
 
-                    <div class="form-group">
-                        <label for="passingTime">通過時刻 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="passingTime" class="form-control" inputmode="numeric" placeholder="例: 123 (➔ 01:23)" maxlength="5" onblur="finalizeTimeFormat(this)">
-                    </div>
+                        <div class="form-group">
+                            <label for="passingTime">通過時刻 <span class="optional-badge">任意</span></label>
+                            <input type="text" id="passingTime" class="form-control" inputmode="numeric" placeholder="例: 123 (➔ 01:23)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="arrivalTime">到着時刻 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="arrivalTime" class="form-control" inputmode="numeric" placeholder="例: 456 (➔ 04:56)" maxlength="5" onblur="finalizeTimeFormat(this)">
-                    </div>
+                        <div class="form-group">
+                            <label for="arrivalTime">到着時刻 <span class="optional-badge">任意</span></label>
+                            <input type="text" id="arrivalTime" class="form-control" inputmode="numeric" placeholder="例: 456 (➔ 04:56)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
-                        <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 758 (➔ 07:58)" maxlength="5" onblur="finalizeTimeFormat(this)">
-                    </div>
+                        <div class="form-group">
+                            <label for="departureTime">発車時刻 <span class="optional-badge">任意</span></label>
+                            <input type="text" id="departureTime" class="form-control" inputmode="numeric" placeholder="例: 758 (➔ 07:58)" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
-                        <textarea id="remarks" class="form-control" placeholder="備考情報"></textarea>
-                    </div>
+                        <div class="form-group">
+                            <label for="remarks">備考欄 <span class="optional-badge">任意</span></label>
+                            <textarea id="remarks" class="form-control" placeholder="備考情報"></textarea>
+                        </div>
 
-                    <button type="submit" class="submit-btn">投稿する</button>
-                </form>
+                        <button type="submit" class="submit-btn">目撃情報を投稿する</button>
+                    </form>
+                </div>
+
+                <!-- B. スジ投稿フォーム -->
+                <div id="sujiFormSection" class="sub-form-section">
+                    <form id="sujiPostForm" onsubmit="handleSujiPost(event)">
+                        <!-- 平日/休日 ダイヤ選択 -->
+                        <div class="form-group">
+                            <label>ダイヤ種別 <span style="color:red;">*</span></label>
+                            <div class="schedule-btn-group">
+                                <button type="button" class="schedule-btn" id="btn-suji-post-weekday" onclick="selectSujiPostSchedule('weekday')">平日ダイヤ</button>
+                                <button type="button" class="schedule-btn" id="btn-suji-post-holiday" onclick="selectSujiPostSchedule('holiday')">休日ダイヤ</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sujiTrainNumber">列番 <span style="color:red;">*</span></label>
+                            <input type="text" id="sujiTrainNumber" class="form-control" placeholder="例: K2391S" maxlength="8" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sujiSyotei">所定 <span style="color:red;">*</span></label>
+                            <input type="text" id="sujiSyotei" class="form-control" placeholder="例: 3500系4両" maxlength="30" required>
+                        </div>
+
+                        <!-- 始発駅エリア (必須) -->
+                        <div class="suji-station-box">
+                            <div class="suji-station-header">
+                                <span>始発駅 (必須)</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom:10px;">
+                                <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                                <input type="text" id="sujiStartStationName" class="form-control" placeholder="例: 豊明" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom:10px;">
+                                <label style="font-size:12px;">入線時間 <span class="optional-badge">任意</span></label>
+                                <input type="text" id="sujiStartEnterTime" class="form-control" inputmode="numeric" placeholder="例: 0510" maxlength="5" onblur="finalizeTimeFormat(this)">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:12px;">発車時間 <span style="color:red;">*</span></label>
+                                <input type="text" id="sujiStartDepTime" class="form-control" inputmode="numeric" placeholder="例: 0515" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                            </div>
+                        </div>
+
+                        <!-- 途中駅リスト (通過駅・運転停車駅など自由追加) -->
+                        <div class="form-group">
+                            <label>途中の駅 (通過 / 運転停車など) <span class="optional-badge">任意</span></label>
+                            <div id="sujiMiddleStationsContainer"></div>
+                            <button type="button" class="submit-btn" style="background-color:#6c757d; font-size:14px; padding:10px; margin-top:8px;" onclick="addSujiMiddleStationField()">＋ 途中駅を追加</button>
+                        </div>
+
+                        <!-- 終着駅エリア (必須) -->
+                        <div class="suji-station-box">
+                            <div class="suji-station-header">
+                                <span>終着駅 (必須)</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom:10px;">
+                                <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                                <input type="text" id="sujiEndStationName" class="form-control" placeholder="例: 名鉄岐阜" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:12px;">到着時刻 <span style="color:red;">*</span></label>
+                                <input type="text" id="sujiEndArrTime" class="form-control" inputmode="numeric" placeholder="例: 0630" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" style="margin-top:15px;">スジを投稿する</button>
+                    </form>
+                </div>
             </div>
         </section>
 
-        <!-- 4. 履歴画面 -->
+        <!-- 4. 履歴画面 (回送目撃情報のみ) -->
         <section id="history-view" class="view-section">
             <div class="search-box-card">
                 <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 履歴を検索 (駅名・方面・列番など)" oninput="filterHistory()">
@@ -809,7 +978,7 @@
             </div>
 
             <div class="section-header">
-                <h2>投稿履歴一覧</h2>
+                <h2>投稿履歴一覧 (目撃情報)</h2>
             </div>
 
             <div id="history-list">
@@ -817,7 +986,7 @@
             </div>
         </section>
 
-        <!-- 5. スジ一覧画面 -->
+        <!-- 5. スジ一覧画面 (スジ投稿データのみ) -->
         <section id="syotei-view" class="view-section">
             <div class="search-box-card">
                 <input type="text" id="sujiSearchInput" class="form-control search-input" placeholder="🔍 列番でスジを検索 (例: K2391S)" oninput="filterSuji()">
@@ -859,7 +1028,7 @@
         </section>
     </main>
 
-    <!-- 運用履歴モーダル -->
+    <!-- 運用履歴モーダル (目撃情報用) -->
     <div id="historyModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -867,6 +1036,17 @@
                 <button class="close-modal-btn" onclick="closeModal()">✕ 閉じる</button>
             </div>
             <div id="modalTimeline"></div>
+        </div>
+    </div>
+
+    <!-- スジ詳細モーダル -->
+    <div id="sujiModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="sujiModalTitle" style="margin:0; color:#d0021b;">スジ詳細情報</h3>
+                <button class="close-modal-btn" onclick="closeSujiModal()">✕ 閉じる</button>
+            </div>
+            <div id="sujiModalBody"></div>
         </div>
     </div>
 
@@ -895,11 +1075,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let postsData = [];
+        let postsData = [];     // 目撃情報データ
+        let sujiData = [];      // スジ投稿データ
         let currentFilter = 'all';
         let currentSujiDayFilter = 'weekday';
         let selectedPostSchedule = null;
         let selectedDirectionType = null;
+        let selectedSujiPostSchedule = null;
 
         let isCouplingActive = false;
         let isSingleUnknownActive = false;
@@ -907,6 +1089,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPostsFromFirestore();
+            fetchSujiFromFirestore();
             initUserName();
         });
 
@@ -1015,11 +1198,26 @@
                       postsData.push(data);
                   });
                   filterHistory();
+              }, (error) => {
+                  console.error("目撃データ取得エラー: ", error);
+                  document.getElementById('history-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
+              });
+        }
+
+        function fetchSujiFromFirestore() {
+            db.collection("suji_posts")
+              .orderBy("timestamp", "desc")
+              .onSnapshot((snapshot) => {
+                  sujiData = [];
+                  snapshot.forEach((doc) => {
+                      const data = doc.data();
+                      data.id = doc.id;
+                      sujiData.push(data);
+                  });
                   filterSuji();
               }, (error) => {
-                  console.error("データ取得エラー: ", error);
-                  document.getElementById('history-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
-                  document.getElementById('suji-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
+                  console.error("スジデータ取得エラー: ", error);
+                  document.getElementById('suji-list').innerHTML = '<p class="empty-msg">スジデータの読み込みに失敗しました。</p>';
               });
         }
 
@@ -1032,10 +1230,46 @@
             }
         }
 
+        function switchSubTab(type) {
+            const witnessBtn = document.getElementById('subTabWitnessBtn');
+            const sujiBtn = document.getElementById('subTabSujiBtn');
+            const witnessSec = document.getElementById('witnessFormSection');
+            const sujiSec = document.getElementById('sujiFormSection');
+
+            if (type === 'witness') {
+                witnessBtn.classList.add('active');
+                sujiBtn.classList.remove('active');
+                witnessSec.classList.add('active');
+                sujiSec.classList.remove('active');
+            } else {
+                sujiBtn.classList.add('active');
+                witnessBtn.classList.remove('active');
+                sujiSec.classList.add('active');
+                witnessSec.classList.remove('active');
+            }
+        }
+
         function selectPostSchedule(scheduleType) {
             selectedPostSchedule = scheduleType;
             const btnWeekday = document.getElementById('btn-post-weekday');
             const btnHoliday = document.getElementById('btn-post-holiday');
+
+            if (scheduleType === 'weekday') {
+                btnWeekday.classList.add('active');
+                btnHoliday.classList.remove('active');
+            } else if (scheduleType === 'holiday') {
+                btnHoliday.classList.add('active');
+                btnWeekday.classList.remove('active');
+            } else {
+                btnWeekday.classList.remove('active');
+                btnHoliday.classList.remove('active');
+            }
+        }
+
+        function selectSujiPostSchedule(scheduleType) {
+            selectedSujiPostSchedule = scheduleType;
+            const btnWeekday = document.getElementById('btn-suji-post-weekday');
+            const btnHoliday = document.getElementById('btn-suji-post-holiday');
 
             if (scheduleType === 'weekday') {
                 btnWeekday.classList.add('active');
@@ -1170,6 +1404,71 @@
             }
         }
 
+        /* スジ投稿用 途中駅の追加・削除 */
+        function addSujiMiddleStationField() {
+            const container = document.getElementById('sujiMiddleStationsContainer');
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'suji-station-box';
+            div.innerHTML = `
+                <div class="suji-station-header">
+                    <span>途中駅 #${index + 1}</span>
+                    <button type="button" class="coupling-action-btn btn-remove-red" onclick="this.closest('.suji-station-box').remove()">✕</button>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                    <input type="text" class="form-control middle-station-name" placeholder="例: 新木曽川" required>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label style="font-size:12px;">種別 <span style="color:red;">*</span></label>
+                    <select class="form-control middle-station-type" onchange="toggleMiddleTimeFields(this)">
+                        <option value="passing">通過</option>
+                        <option value="stopping">運転停車</option>
+                    </select>
+                </div>
+                <div class="middle-time-area-passing form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;">通過時間 <span style="color:red;">*</span></label>
+                    <input type="text" class="form-control middle-pass-time" inputmode="numeric" placeholder="例: 0535" maxlength="5" onblur="finalizeTimeFormat(this)">
+                </div>
+                <div class="middle-time-area-stopping form-group" style="margin-bottom:0; display:none;">
+                    <div style="display:flex; gap:6px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">到着時刻</label>
+                            <input type="text" class="form-control middle-arr-time" inputmode="numeric" placeholder="例: 0535" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">発車時刻</label>
+                            <input type="text" class="form-control middle-dep-time" inputmode="numeric" placeholder="例: 0537" maxlength="5" onblur="finalizeTimeFormat(this)">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function toggleMiddleTimeFields(selectElem) {
+            const box = selectElem.closest('.suji-station-box');
+            const passingArea = box.querySelector('.middle-time-area-passing');
+            const stoppingArea = box.querySelector('.middle-time-area-stopping');
+            const passInput = box.querySelector('.middle-pass-time');
+            const arrInput = box.querySelector('.middle-arr-time');
+            const depInput = box.querySelector('.middle-dep-time');
+
+            if (selectElem.value === 'passing') {
+                passingArea.style.display = 'block';
+                stoppingArea.style.display = 'none';
+                passInput.setAttribute('required', 'required');
+                arrInput.removeAttribute('required');
+                depInput.removeAttribute('required');
+            } else {
+                passingArea.style.display = 'none';
+                stoppingArea.style.display = 'block';
+                passInput.removeAttribute('required');
+                arrInput.setAttribute('required', 'required');
+                depInput.setAttribute('required', 'required');
+            }
+        }
+
         function setSujiDayFilter(dayType, btnElement) {
             currentSujiDayFilter = dayType;
             document.querySelectorAll('#syotei-view .filter-btn').forEach(b => b.classList.remove('active'));
@@ -1182,9 +1481,9 @@
             const keyword = document.getElementById('sujiSearchInput').value.toLowerCase().trim();
 
             const isHoliday = (currentSujiDayFilter === 'holiday');
-            const filtered = postsData.filter(post => {
-                const matchesDay = (post.isHoliday === isHoliday);
-                const trainNum = (post.trainNum || '').toLowerCase();
+            const filtered = sujiData.filter(suji => {
+                const matchesDay = (suji.isHoliday === isHoliday);
+                const trainNum = (suji.trainNumber || '').toLowerCase();
                 const matchesKeyword = keyword === '' || trainNum.includes(keyword);
                 return matchesDay && matchesKeyword;
             });
@@ -1195,8 +1494,17 @@
             }
 
             let html = '';
-            filtered.forEach(post => {
-                html += createPostCardHTML(post);
+            filtered.forEach(suji => {
+                const trainNumDisp = suji.trainNumber || '列番なし';
+                const syoteiDisp = suji.syotei || '所定なし';
+                html += `
+                    <div class="suji-card" onclick="openSujiModal('${suji.id}')">
+                        <div class="suji-card-header">
+                            <span class="suji-train-num" style="text-align: left;">列番: ${trainNumDisp}</span>
+                            <span class="suji-syotei" style="text-align: right;">${syoteiDisp}</span>
+                        </div>
+                    </div>
+                `;
             });
             sujiContainer.innerHTML = html;
         }
@@ -1367,11 +1675,127 @@
                 selectPostSchedule(null);
                 selectDirectionType(null);
 
-                alert('投稿が完了しました！');
+                alert('目撃情報の投稿が完了しました！');
                 switchView('history-view', document.querySelectorAll('.footer-btn')[3]);
             } catch (error) {
                 console.error("投稿エラー: ", error);
                 alert('【エラー】データベースへの保存に失敗しました。');
+            }
+        }
+
+        async function handleSujiPost(event) {
+            event.preventDefault();
+
+            const authorName = localStorage.getItem('meitetsu_user_name');
+            if (!authorName || !authorName.trim()) {
+                alert('【エラー】投稿するには「設定」画面からユーザー名を設定してください。');
+                switchView('account-view', document.querySelectorAll('.footer-btn')[5]);
+                return;
+            }
+
+            if (!selectedSujiPostSchedule) {
+                alert('【エラー】スジのダイヤ種別（平日ダイヤ または 休日ダイヤ）を選択してください。');
+                return;
+            }
+
+            const trainNumber = document.getElementById('sujiTrainNumber').value.trim();
+            const syotei = document.getElementById('sujiSyotei').value.trim();
+
+            // 始発駅
+            const startName = document.getElementById('sujiStartStationName').value.trim();
+            const startEnter = document.getElementById('sujiStartEnterTime').value.trim();
+            const startDep = document.getElementById('sujiStartDepTime').value.trim();
+
+            if (!startName || !startDep) {
+                alert('【エラー】始発駅の駅名と発車時間は必須です。');
+                return;
+            }
+
+            const stations = [];
+            // 始発駅追加（■特別扱いまたは通常扱い、指定ルールに従い■特別とする）
+            stations.push({
+                name: startName,
+                type: 'start',
+                enterTime: startEnter,
+                depTime: startDep,
+                marker: '■' // 始発駅・終着駅は■特別
+            });
+
+            // 途中駅
+            const middleBoxes = document.querySelectorAll('#sujiMiddleStationsContainer .suji-station-box');
+            for (let box of middleBoxes) {
+                const mName = box.querySelector('.middle-station-name').value.trim();
+                const mType = box.querySelector('.middle-station-type').value;
+                if (!mName) continue;
+
+                if (mType === 'passing') {
+                    const mPass = box.querySelector('.middle-pass-time').value.trim();
+                    if (!mPass) {
+                        alert(`【エラー】途中駅「${mName}」の通過時間が入力されていません。`);
+                        return;
+                    }
+                    stations.push({
+                        name: mName,
+                        type: 'passing',
+                        passTime: mPass,
+                        marker: '□' // 通過は□次の駅まで線を引く
+                    });
+                } else {
+                    const mArr = box.querySelector('.middle-arr-time').value.trim();
+                    const mDep = box.querySelector('.middle-dep-time').value.trim();
+                    if (!mArr || !mDep) {
+                        alert(`【エラー】途中駅「${mName}」の到着・発車時刻を正しく入力してください。`);
+                        return;
+                    }
+                    stations.push({
+                        name: mName,
+                        type: 'stopping',
+                        arrTime: mArr,
+                        depTime: mDep,
+                        marker: '□' // 停車は□停車
+                    });
+                }
+            }
+
+            // 終着駅
+            const endName = document.getElementById('sujiEndStationName').value.trim();
+            const endArr = document.getElementById('sujiEndArrTime').value.trim();
+
+            if (!endName || !endArr) {
+                alert('【エラー】終着駅の駅名と到着時刻は必須です。');
+                return;
+            }
+
+            stations.push({
+                name: endName,
+                type: 'end',
+                arrTime: endArr,
+                marker: '■' // 終着駅は■特別
+            });
+
+            const isHoliday = (selectedSujiPostSchedule === 'holiday');
+
+            const newSuji = {
+                trainNumber: trainNumber,
+                syotei: syotei,
+                stations: stations,
+                authorName: authorName.trim(),
+                isHoliday: isHoliday,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection("suji_posts").add(newSuji);
+
+                document.getElementById('sujiPostForm').reset();
+                document.getElementById('sujiMiddleStationsContainer').innerHTML = '';
+                selectSujiPostSchedule(null);
+
+                alert('スジの投稿が完了しました！');
+                switchView('syotei-view', document.querySelectorAll('.footer-btn')[4]);
+            } catch (error) {
+                console.error("スジ投稿エラー: ", error);
+                alert('【エラー】スジデータの保存に失敗しました。');
             }
         }
 
@@ -1450,8 +1874,57 @@
             modal.style.display = 'flex';
         }
 
+        function openSujiModal(sujiId) {
+            const suji = sujiData.find(s => s.id === sujiId);
+            if (!suji) return;
+
+            const modal = document.getElementById('sujiModal');
+            const title = document.getElementById('sujiModalTitle');
+            const body = document.getElementById('sujiModalBody');
+
+            const dayLabel = suji.isHoliday ? '休日ダイヤ' : '平日ダイヤ';
+            title.innerText = `列番: ${suji.trainNumber} (${dayLabel}) のスジ詳細`;
+
+            let html = `<div style="font-size:14px; font-weight:bold; margin-bottom:10px; color:#d0021b;">所定: ${suji.syotei}</div>`;
+            
+            suji.stations.forEach(st => {
+                let timeStr = '';
+                if (st.type === 'start') {
+                    const enterStr = st.enterTime ? `入線:${st.enterTime} ` : '';
+                    timeStr = `${enterStr}発:${st.depTime}`;
+                } else if (st.type === 'end') {
+                    timeStr = `着:${st.arrTime}`;
+                } else if (st.type === 'passing') {
+                    timeStr = `通:${st.passTime}`;
+                } else if (st.type === 'stopping') {
+                    timeStr = `着:${st.arrTime} / 発:${st.depTime}`;
+                }
+
+                let markerDesc = '';
+                if (st.marker === '■') {
+                    markerDesc = '特別';
+                } else {
+                    markerDesc = (st.type === 'passing') ? '次の駅まで線を引く(通過)' : '停車';
+                }
+
+                html += `
+                    <div class="suji-timeline-row">
+                        <div><strong>${st.marker} ${st.name}</strong> <span style="font-size:11px; color:#666;">(${markerDesc})</span></div>
+                        <div style="font-weight:bold; color:#333;">${timeStr}</div>
+                    </div>
+                `;
+            });
+
+            body.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
         function closeModal() {
             document.getElementById('historyModal').style.display = 'none';
+        }
+
+        function closeSujiModal() {
+            document.getElementById('sujiModal').style.display = 'none';
         }
 
         function createPostCardHTML(post) {
@@ -1505,7 +1978,7 @@
             const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
 
             if (postsData.length === 0) {
-                historyContainer.innerHTML = '<p class="empty-msg">過去の投稿履歴はありません。</p>';
+                historyContainer.innerHTML = '<p class="empty-msg">過去の目撃履歴はありません。</p>';
                 return;
             }
 
@@ -1525,7 +1998,7 @@
             });
 
             if (filteredPosts.length === 0) {
-                historyContainer.innerHTML = '<p class="empty-msg">該当する履歴が見つかりませんでした。</p>';
+                historyContainer.innerHTML = '<p class="empty-msg">該当する目撃履歴が見つかりませんでした。</p>';
                 return;
             }
 
