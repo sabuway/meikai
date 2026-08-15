@@ -447,57 +447,6 @@
             margin: 0;
         }
 
-        /* 回送所定一覧スタイル */
-        .syotei-tab-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .syotei-tab-btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #ffffff;
-            color: #333;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .syotei-tab-btn.active {
-            background-color: #d0021b;
-            color: #ffffff;
-            border-color: #d0021b;
-        }
-
-        .syotei-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .syotei-btn {
-            background-color: #ffffff;
-            border: 1px solid #d0021b;
-            color: #d0021b;
-            padding: 12px 6px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-
-        .syotei-btn:hover {
-            background-color: #d0021b;
-            color: #ffffff;
-        }
-
         /* 投稿カード内ヘッダー */
         .post-header {
             display: flex;
@@ -749,9 +698,9 @@
                         投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。編成が不明な場合は「不明」ボタンをご活用ください。
                     </div>
 
-                    <div class="manual-subheading">回送所定について</div>
+                    <div class="manual-subheading">スジについて</div>
                     <div class="manual-body">
-                        2026年7月11日改正後の回送の所定を提供していきます。皆様から提供された情報をもに順次入力していきます。
+                        平日・休日の切り替えや列番検索を活用してスジを確認できます。
                     </div>
                 </div>
             </div>
@@ -868,35 +817,22 @@
             </div>
         </section>
 
-        <!-- 5. 回送所定一覧画面 -->
+        <!-- 5. スジ一覧画面 -->
         <section id="syotei-view" class="view-section">
+            <div class="search-box-card">
+                <input type="text" id="sujiSearchInput" class="form-control search-input" placeholder="🔍 列番でスジを検索 (例: K2391S)" oninput="filterSuji()">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" id="btn-suji-weekday" onclick="setSujiDayFilter('weekday', this)">平日</button>
+                    <button class="filter-btn" id="btn-suji-holiday" onclick="setSujiDayFilter('holiday', this)">休日</button>
+                </div>
+            </div>
+
             <div class="section-header">
-                <h2>回送所定一覧</h2>
+                <h2>スジ一覧</h2>
             </div>
 
-            <div class="syotei-tab-container">
-                <button class="syotei-tab-btn active" onclick="selectSyoteiDay('weekday', this)">平日所定</button>
-                <button class="syotei-tab-btn" onclick="selectSyoteiDay('holiday', this)">休日所定</button>
-            </div>
-
-            <div class="syotei-grid">
-                <button class="syotei-btn" onclick="openSyoteiDetail('B2')">B2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('1800')">1800</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('C4')">C4</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('C2')">C2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('3R2')">3R2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('3R4')">3R4</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('3Rs2')">3Rs2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('3Rs4')">3Rs4</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6R2')">6R2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6R4')">6R4</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6Rm2')">6Rm2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6Rm4')">6Rm4</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6Rs2')">6Rs2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('6Ro2')">6Ro2</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('5000')">5000</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('小牧線')">小牧線</button>
-                <button class="syotei-btn" onclick="openSyoteiDetail('瀬戸線')">瀬戸線</button>
+            <div id="suji-list">
+                <p class="empty-msg">該当するスジはありません。</p>
             </div>
         </section>
 
@@ -941,7 +877,7 @@
             <button class="footer-btn" onclick="switchView('manual-view', this)">説明</button>
             <button class="footer-btn" onclick="switchView('post-view', this)">投稿欄</button>
             <button class="footer-btn" onclick="switchView('history-view', this)">履歴</button>
-            <button class="footer-btn" onclick="switchView('syotei-view', this)">回送<br>所定</button>
+            <button class="footer-btn" onclick="switchView('syotei-view', this)">スジ</button>
             <button class="footer-btn" onclick="switchView('account-view', this)">設定</button>
         </nav>
     </footer>
@@ -961,7 +897,7 @@
 
         let postsData = [];
         let currentFilter = 'all';
-        let currentSyoteiDay = 'weekday';
+        let currentSujiDayFilter = 'weekday';
         let selectedPostSchedule = null;
         let selectedDirectionType = null;
 
@@ -1079,9 +1015,11 @@
                       postsData.push(data);
                   });
                   filterHistory();
+                  filterSuji();
               }, (error) => {
                   console.error("データ取得エラー: ", error);
                   document.getElementById('history-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
+                  document.getElementById('suji-list').innerHTML = '<p class="empty-msg">データの読み込みに失敗しました。</p>';
               });
         }
 
@@ -1232,15 +1170,35 @@
             }
         }
 
-        function selectSyoteiDay(dayType, btnElement) {
-            currentSyoteiDay = dayType;
-            document.querySelectorAll('.syotei-tab-btn').forEach(b => b.classList.remove('active'));
+        function setSujiDayFilter(dayType, btnElement) {
+            currentSujiDayFilter = dayType;
+            document.querySelectorAll('#syotei-view .filter-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
+            filterSuji();
         }
 
-        function openSyoteiDetail(type) {
-            const dayText = currentSyoteiDay === 'weekday' ? '平日' : '休日';
-            alert(`【${dayText}・${type}所定】の回送ダイヤ一覧を表示します（今後登録可能）。`);
+        function filterSuji() {
+            const sujiContainer = document.getElementById('suji-list');
+            const keyword = document.getElementById('sujiSearchInput').value.toLowerCase().trim();
+
+            const isHoliday = (currentSujiDayFilter === 'holiday');
+            const filtered = postsData.filter(post => {
+                const matchesDay = (post.isHoliday === isHoliday);
+                const trainNum = (post.trainNum || '').toLowerCase();
+                const matchesKeyword = keyword === '' || trainNum.includes(keyword);
+                return matchesDay && matchesKeyword;
+            });
+
+            if (filtered.length === 0) {
+                sujiContainer.innerHTML = '<p class="empty-msg">該当するスジが見つかりませんでした。</p>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(post => {
+                html += createPostCardHTML(post);
+            });
+            sujiContainer.innerHTML = html;
         }
 
         function onlyNumbers(input) {
@@ -1434,7 +1392,6 @@
             let rawDir = post.direction || '';
             let type = post.directionType;
 
-            // 旧形式データ（（行き）や（方面）が文字列に含まれている場合）の自動判定・変換
             if (!type) {
                 if (rawDir.includes('（行き）') || rawDir.includes('行')) {
                     type = '行先';
@@ -1445,7 +1402,6 @@
                 }
             }
 
-            // 余分なサフィックスを綺麗に取り除く
             let cleanDir = rawDir.replace(/（行き）|（方面）|行|方面/g, '').trim();
             if (!cleanDir) cleanDir = rawDir;
 
@@ -1481,7 +1437,7 @@
                     <div class="timeline-item">
                         <div style="font-weight:bold; color:#d0021b;">${timeText} - 確認駅:${post.station}</div>
                         <div style="font-size:13px; color:#333; margin-top:2px;">
-                            ➔ ${dirFormatted} | 編成: ${post.formation}
+                            ${dirFormatted} | 編成: ${post.formation}
                         </div>
                         <div style="font-size:12px; color:#666; margin-top:2px;">
                             備考: ${post.remarks} / ${author} (投稿時間: ${post.postDate})
@@ -1523,7 +1479,7 @@
                         </div>
                     </div>
                     <div class="post-details">
-                        <div class="left-info"><strong>行先/方面:</strong> 確認駅:${post.station} ➔ ${dirFormatted}</div>
+                        <div class="left-info"><strong>行先/方面:</strong> 確認駅:${post.station} ${dirFormatted}</div>
                         <div class="right-info"><strong>編成:</strong> ${post.formation}</div>
                     </div>
                     <div class="post-remarks">
