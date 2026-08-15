@@ -106,13 +106,6 @@
             color: #444;
             line-height: 1.6;
         }
-        .manual-subheading {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-top: 10px;
-            margin-bottom: 4px;
-        }
 
         /* お知らせカード */
         .news-item {
@@ -512,47 +505,6 @@
             color: #d0021b;
         }
 
-        .post-time-container {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .history-btn {
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            padding: 3px 8px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .schedule-badge-weekday {
-            font-size: 11px;
-            background-color: #e9ecef;
-            color: #333;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .schedule-badge-holiday {
-            font-size: 11px;
-            background-color: #ffccd5;
-            color: #d0021b;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .post-time {
-            font-size: 13px;
-            color: #444;
-            font-weight: bold;
-        }
-
         .post-details {
             display: flex;
             justify-content: space-between;
@@ -560,14 +512,6 @@
             font-size: 14px;
             color: #333;
             margin-bottom: 8px;
-        }
-
-        .post-details .left-info {
-            text-align: left;
-        }
-
-        .post-details .right-info {
-            text-align: right;
         }
 
         .post-remarks {
@@ -599,14 +543,6 @@
             align-items: center;
             font-size: 16px;
             font-weight: bold;
-        }
-        .suji-train-num {
-            text-align: left;
-            color: #d0021b;
-        }
-        .suji-syotei {
-            text-align: right;
-            color: #333;
         }
 
         /* モーダル内スジ詳細タイムライン */
@@ -670,24 +606,6 @@
             padding: 5px 12px;
             border-radius: 6px;
             cursor: pointer;
-        }
-
-        .timeline-item {
-            border-left: 3px solid #d0021b;
-            padding-left: 12px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 0;
-            width: 9px;
-            height: 9px;
-            background: #d0021b;
-            border-radius: 50%;
         }
 
         /* フッター固定ナビ (6項目) */
@@ -766,7 +684,22 @@
                 <div class="manual-section">
                     <div class="manual-title">はじめに</div>
                     <div class="manual-body">
-                        このサイトは名鉄(名古屋鉄道)の回送の情報を共有するプラットフォームです。
+                        このサイトは名鉄(名古屋鉄道)の回送の情報を共有するプラットフォームです。2026年7月11日以降の回送電車の目撃、スジの提供共有します。2026年7月11日以前の回送まとめは今後皆様からの提供を基に整備していく予定ですので実装までしばらくお待ちください。
+                    </div>
+                </div>
+                <div class="manual-section">
+                    <div class="manual-title">ルール</div>
+                    <div class="manual-body">
+                        架空のものや予想のスジの提供は禁止です。また、回送時刻は目視で確認する際もあるので1～3分前後のずれは承知の上ご利用ください。また、こちらの提供している情報からの損益については責任を取りかねますのでご了承ください。
+                    </div>
+                </div>
+                <div class="manual-section">
+                    <div class="manual-title">使い方</div>
+                    <div class="manual-body">
+                        <strong>最新情報について</strong><br>
+                        最新情報にはサイトのお知らせから名鉄の情報まで多くのことを掲載していきます。<br><br>
+                        <strong>投稿について</strong><br>
+                        投稿は投稿欄から行ってください平日or休日の選択をし、その他の項目を入力し、投稿してください。投稿されたものは履歴に残ります。履歴は項目ごとに絞り検索が可能です。編成が不明な場合は「不明」ボタンをご活用ください。
                     </div>
                 </div>
             </div>
@@ -1158,7 +1091,7 @@
             if (isCouplingActive) renderCouplingFields();
         }
 
-        function renderCouplingFields(preserve) {
+        function renderCouplingFields() {
             const container = document.getElementById('couplingInputsList');
             let html = '';
             for (let i = 0; i < couplingCount; i++) {
@@ -1183,14 +1116,14 @@
         function addCouplingField() {
             if (couplingCount < 4) {
                 couplingCount++;
-                renderCouplingFields(true);
+                renderCouplingFields();
             }
         }
 
         function removeCouplingField() {
             if (couplingCount > 2) {
                 couplingCount--;
-                renderCouplingFields(true);
+                renderCouplingFields();
             }
         }
 
@@ -1385,10 +1318,208 @@
             }
         }
 
-        function handlePost(event) {
+        async function handlePost(event) {
             event.preventDefault();
-            // 目撃情報側の処理
-            alert('目撃情報は正常に処理されました');
+
+            const authorName = localStorage.getItem('meitetsu_user_name');
+            if (!authorName) {
+                alert('【エラー】「設定」画面からユーザー名を設定してください。');
+                switchView('account-view', document.querySelectorAll('.footer-btn')[5]);
+                return;
+            }
+
+            if (!selectedPostSchedule) {
+                alert('【エラー】ダイヤ種別を選択してください。');
+                return;
+            }
+
+            if (!selectedDirectionType) {
+                alert('【エラー】「方面」または「行先」を選択してください。');
+                return;
+            }
+
+            const trainNumber = document.getElementById('trainNumber').value.trim();
+            const station = document.getElementById('station').value.trim();
+            const direction = document.getElementById('direction').value.trim();
+            const passingTime = document.getElementById('passingTime').value.trim();
+            const arrivalTime = document.getElementById('arrivalTime').value.trim();
+            const departureTime = document.getElementById('departureTime').value.trim();
+            const remarks = document.getElementById('remarks').value.trim();
+
+            if (!passingTime && !arrivalTime && !departureTime) {
+                alert('【エラー】通過・到着・発車のうち少なくとも1つの時刻を入力してください。');
+                return;
+            }
+
+            let formationStr = '';
+            if (isSingleUnknownActive) {
+                formationStr = '不明';
+            } else {
+                const singleInput = document.getElementById('formation').value.trim();
+                if (!singleInput) {
+                    alert('【エラー】編成番号を入力するか「不明」を選択してください。');
+                    return;
+                }
+                formationStr = singleInput;
+            }
+
+            if (isCouplingActive) {
+                const couplingBoxes = document.querySelectorAll('#couplingInputsList .coupling-item-box');
+                let subFormations = [];
+                let hasError = false;
+
+                couplingBoxes.forEach(box => {
+                    const btn = box.querySelector('.coupling-unknown-btn');
+                    const input = box.querySelector('.coupling-field');
+                    if (btn.classList.contains('active')) {
+                        subFormations.push('不明');
+                    } else {
+                        const val = input.value.trim();
+                        if (!val) hasError = true;
+                        subFormations.push(val);
+                    }
+                });
+
+                if (hasError) {
+                    alert('【エラー】併結するすべての編成番号を入力するか「不明」を選択してください。');
+                    return;
+                }
+                formationStr += ' + ' + subFormations.join(' + ');
+            }
+
+            const newPost = {
+                trainNumber: trainNumber,
+                station: station,
+                directionType: selectedDirectionType,
+                direction: direction,
+                formation: formationStr,
+                passingTime: passingTime,
+                arrivalTime: arrivalTime,
+                departureTime: departureTime,
+                remarks: remarks,
+                authorName: authorName,
+                isHoliday: (selectedPostSchedule === 'holiday'),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = '送信中...';
+
+            try {
+                await db.collection("posts").add(newPost);
+                document.getElementById('postForm').reset();
+                selectPostSchedule(null);
+                selectDirectionType(null);
+                isSingleUnknownActive = false;
+                document.getElementById('formation').disabled = false;
+                document.getElementById('singleUnknownBtn').classList.remove('active');
+                if (isCouplingActive) toggleCoupling();
+                
+                submitBtn.innerText = '投稿完了！';
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = '目撃情報を投稿する';
+                }, 1500);
+
+                switchView('history-view', document.querySelectorAll('.footer-btn')[3]);
+            } catch (error) {
+                console.error("スジ投稿エラー: ", error);
+                alert('【エラー】データの保存に失敗しました。');
+                submitBtn.disabled = false;
+                submitBtn.innerText = '目撃情報を投稿する';
+            }
+        }
+
+        function filterHistory() {
+            const historyContainer = document.getElementById('history-list');
+            if (!historyContainer) return;
+
+            const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const filtered = postsData.filter(post => {
+                const trainNum = (post.trainNumber || '').toLowerCase();
+                const station = (post.station || '').toLowerCase();
+                const direction = (post.direction || '').toLowerCase();
+                const formation = (post.formation || '').toLowerCase();
+                const remarks = (post.remarks || '').toLowerCase();
+                const author = (post.authorName || '').toLowerCase();
+
+                const matchesKeyword = keyword === '' || 
+                    trainNum.includes(keyword) || 
+                    station.includes(keyword) || 
+                    direction.includes(keyword) || 
+                    formation.includes(keyword) || 
+                    remarks.includes(keyword) || 
+                    author.includes(keyword);
+
+                if (!matchesKeyword) return false;
+
+                if (currentFilter === 'all') return true;
+                if (currentFilter === 'weekday') return !post.isHoliday;
+                if (currentFilter === 'holiday') return post.isHoliday;
+                if (currentFilter === 'today') {
+                    if (!post.timestamp) return false;
+                    const postDate = post.postDate ? new Date(post.postDate) : post.timestamp.toDate();
+                    const today = new Date();
+                    return postDate.getFullYear() === today.getFullYear() &&
+                           postDate.getMonth() === today.getMonth() &&
+                           postDate.getDate() === today.getDate();
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                historyContainer.innerHTML = '<p class="empty-msg">投稿履歴はありません。</p>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(post => {
+                let timeInfo = [];
+                if (post.passingTime) timeInfo.push(`通:${post.passingTime}`);
+                if (post.arrivalTime) timeInfo.push(`着:${post.arrivalTime}`);
+                if (post.departureTime) timeInfo.push(`発:${post.departureTime}`);
+                let timeStr = timeInfo.length > 0 ? timeInfo.join(' / ') : '時刻記載なし';
+
+                let dateStr = '';
+                if (post.timestamp) {
+                    const d = post.timestamp.toDate();
+                    dateStr = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+
+                html += `
+                    <div class="post-card ${post.isHoliday ? 'holiday' : 'weekday'}" onclick="openModal('${post.trainNumber}')" style="cursor: pointer;">
+                        <div class="post-header">
+                            <span class="post-title">列番: ${post.trainNumber || '不明'}</span>
+                            <span class="${post.isHoliday ? 'schedule-badge-holiday' : 'schedule-badge-weekday'}" style="font-size:12px; font-weight:bold; color:${post.isHoliday ? '#d0021b' : '#333'};">
+                                ${post.isHoliday ? '休日' : '平日'}
+                            </span>
+                        </div>
+                        <div class="post-details">
+                            <div>確認駅: <strong>${post.station}</strong></div>
+                            <div>${post.directionType || '方面'}: <strong>${post.direction}</strong></div>
+                        </div>
+                        <div class="post-details">
+                            <div>編成: <strong>${post.formation}</strong></div>
+                            <div style="font-size:13px; color:#555;">${timeStr}</div>
+                        </div>
+                        ${post.remarks ? `<div class="post-remarks">備考: ${post.remarks}</div>` : ''}
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:#888;">
+                            <span>投稿者: ${post.authorName || '名無し'}</span>
+                            <span>${dateStr}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            historyContainer.innerHTML = html;
+        }
+
+        function setDateFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            document.querySelectorAll('#history-view .filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            filterHistory();
         }
 
         function setSujiDayFilter(dayType, btnElement) {
@@ -1426,6 +1557,47 @@
                 `;
             });
             sujiContainer.innerHTML = html;
+        }
+
+        function openModal(trainNumber) {
+            if (!trainNumber || trainNumber === '不明') return;
+            const modal = document.getElementById('historyModal');
+            document.getElementById('modalTitle').innerText = `列番: ${trainNumber} の運用履歴`;
+            
+            const matchedPosts = postsData.filter(p => p.trainNumber === trainNumber);
+            let html = '';
+
+            if (matchedPosts.length === 0) {
+                html = '<p class="empty-msg">履歴が見つかりません。</p>';
+            } else {
+                matchedPosts.forEach(p => {
+                    let timeInfo = [];
+                    if (p.passingTime) timeInfo.push(`通:${p.passingTime}`);
+                    if (p.arrivalTime) timeInfo.push(`着:${p.arrivalTime}`);
+                    if (p.departureTime) timeInfo.push(`発:${p.departureTime}`);
+                    let timeStr = timeInfo.length > 0 ? timeInfo.join(' / ') : '';
+
+                    let dateStr = '';
+                    if (p.timestamp) {
+                        const d = p.timestamp.toDate();
+                        dateStr = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                    }
+
+                    html += `
+                        <div class="suji-timeline-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                            <div style="display:flex; justify-content:space-width; width:100%; justify-content:space-between;">
+                                <strong>${p.station} (${p.directionType || '方面'}: ${p.direction})</strong>
+                                <span style="font-size:12px; color:#d0021b; font-weight:bold;">${p.isHoliday ? '休日' : '平日'}</span>
+                            </div>
+                            <div>編成: <strong>${p.formation}</strong> ${timeStr ? `/ ${timeStr}` : ''}</div>
+                            ${p.remarks ? `<div style="font-size:12px; color:#666;">備考: ${p.remarks}</div>` : ''}
+                            <div style="font-size:10px; color:#888; align-self:flex-end;">投稿者: ${p.authorName || '名無し'} (${dateStr})</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modalTimeline').innerHTML = html;
+            modal.style.display = 'flex';
         }
 
         function openSujiModal(sujiId) {
