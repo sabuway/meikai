@@ -400,7 +400,7 @@
             cursor: not-allowed;
         }
 
-        /* スジ投稿用 駅ブロックのスタイル */
+        /* スジ投稿用 駅ブロックのスタイル (横並び対応) */
         .suji-station-box {
             background: #f8f9fa;
             border: 1px solid #ddd;
@@ -417,6 +417,17 @@
             font-size: 13px;
             font-weight: bold;
             color: #333;
+        }
+        /* 駅と時刻を横並びにするレイアウト用 */
+        .suji-inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            margin-bottom: 8px;
+        }
+        .suji-inline-row .form-group {
+            margin-bottom: 0 !important;
+            flex: 1;
         }
 
         /* 検索・フィルターエリア */
@@ -820,22 +831,24 @@
                             <input type="text" id="sujiSyotei" class="form-control" placeholder="例: 3500系4両" maxlength="30" required>
                         </div>
 
-                        <!-- 始発駅エリア (必須) -->
+                        <!-- 始発駅エリア (必須・横並び) -->
                         <div class="suji-station-box">
                             <div class="suji-station-header">
                                 <span>始発駅 (必須)</span>
                             </div>
-                            <div class="form-group" style="margin-bottom:10px;">
-                                <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
-                                <input type="text" id="sujiStartStationName" class="form-control" placeholder="例: 豊明" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom:10px;">
-                                <label style="font-size:12px;">入線時間 <span class="optional-badge">任意</span></label>
-                                <input type="text" id="sujiStartEnterTime" class="form-control" inputmode="numeric" placeholder="例: 0510" maxlength="5" onblur="finalizeTimeFormat(this)">
-                            </div>
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:12px;">発車時間 <span style="color:red;">*</span></label>
-                                <input type="text" id="sujiStartDepTime" class="form-control" inputmode="numeric" placeholder="例: 0515" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                            <div class="suji-inline-row">
+                                <div class="form-group">
+                                    <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                                    <input type="text" id="sujiStartStationName" class="form-control" placeholder="例: 豊明" required>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px;">入線 <span class="optional-badge">任意</span></label>
+                                    <input type="text" id="sujiStartEnterTime" class="form-control" inputmode="numeric" placeholder="例: 0510" maxlength="5" onblur="finalizeTimeFormat(this)">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px;">発車 <span style="color:red;">*</span></label>
+                                    <input type="text" id="sujiStartDepTime" class="form-control" inputmode="numeric" placeholder="例: 0515" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                                </div>
                             </div>
                         </div>
 
@@ -846,18 +859,20 @@
                             <button type="button" class="submit-btn" style="background-color:#6c757d; font-size:14px; padding:10px; margin-top:8px;" onclick="addSujiMiddleStationField()">＋ 途中駅を追加</button>
                         </div>
 
-                        <!-- 終着駅エリア (必須) -->
+                        <!-- 終着駅エリア (必須・横並び) -->
                         <div class="suji-station-box">
                             <div class="suji-station-header">
                                 <span>終着駅 (必須)</span>
                             </div>
-                            <div class="form-group" style="margin-bottom:10px;">
-                                <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
-                                <input type="text" id="sujiEndStationName" class="form-control" placeholder="例: 名鉄岐阜" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label style="font-size:12px;">到着時刻 <span style="color:red;">*</span></label>
-                                <input type="text" id="sujiEndArrTime" class="form-control" inputmode="numeric" placeholder="例: 0630" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                            <div class="suji-inline-row">
+                                <div class="form-group">
+                                    <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                                    <input type="text" id="sujiEndStationName" class="form-control" placeholder="例: 名鉄岐阜" required>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px;">到着時刻 <span style="color:red;">*</span></label>
+                                    <input type="text" id="sujiEndArrTime" class="form-control" inputmode="numeric" placeholder="例: 0630" maxlength="5" onblur="finalizeTimeFormat(this)" required>
+                                </div>
                             </div>
                         </div>
 
@@ -1137,16 +1152,18 @@
                     <span>途中駅 #${index + 1}</span>
                     <button type="button" class="coupling-action-btn btn-remove-red" onclick="this.closest('.suji-station-box').remove()">✕</button>
                 </div>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
-                    <input type="text" class="form-control middle-station-name" placeholder="例: 新木曽川" required>
-                </div>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px;">種別 <span style="color:red;">*</span></label>
-                    <select class="form-control middle-station-type" onchange="toggleMiddleTimeFields(this)">
-                        <option value="passing">通過</option>
-                        <option value="stopping">運転停車</option>
-                    </select>
+                <div class="suji-inline-row">
+                    <div class="form-group">
+                        <label style="font-size:12px;">駅名 <span style="color:red;">*</span></label>
+                        <input type="text" class="form-control middle-station-name" placeholder="例: 新木曽川" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">種別 <span style="color:red;">*</span></label>
+                        <select class="form-control middle-station-type" onchange="toggleMiddleTimeFields(this)">
+                            <option value="passing">通過</option>
+                            <option value="stopping">運転停車</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="middle-time-area-passing form-group" style="margin-bottom:0;">
                     <label style="font-size:12px;">通過時間 <span style="color:red;">*</span></label>
@@ -1492,7 +1509,7 @@
                     <div class="post-card ${post.isHoliday ? 'holiday' : 'weekday'}" onclick="openModal('${post.trainNumber}')" style="cursor: pointer;">
                         <div class="post-header">
                             <span class="post-title">列番: ${post.trainNumber || '不明'}</span>
-                            <span class="${post.isHoliday ? 'schedule-badge-holiday' : 'schedule-badge-weekday'}" style="font-size:12px; font-weight:bold; color:${post.isHoliday ? '#d0021b' : '#333'};">
+                            <span style="font-size:12px; font-weight:bold; color:${post.isHoliday ? '#d0021b' : '#333'};">
                                 ${post.isHoliday ? '休日' : '平日'}
                             </span>
                         </div>
@@ -1505,9 +1522,9 @@
                             <div style="font-size:13px; color:#555;">${timeStr}</div>
                         </div>
                         ${post.remarks ? `<div class="post-remarks">備考: ${post.remarks}</div>` : ''}
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:#888;">
-                            <span>投稿者: ${post.authorName || '名無し'}</span>
-                            <span>${dateStr}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <span style="font-size:11px; color:#666;">投稿者: ${post.authorName || '名無し'}</span>
+                            <span style="font-size:11px; color:#888;">${dateStr}</span>
                         </div>
                     </div>
                 `;
@@ -1547,11 +1564,27 @@
 
             let html = '';
             filtered.forEach(suji => {
+                // 始発と終着の情報を抽出して「始発駅 ＋ 時間 ➔ 終着駅 ＋ 時間」の形式を作成
+                let routeSummary = '';
+                if (suji.stations && suji.stations.length > 0) {
+                    const startSt = suji.stations[0];
+                    const endSt = suji.stations[suji.stations.length - 1];
+                    const startTime = startSt.depTime || startSt.enterTime || '';
+                    const endTime = endSt.arrTime || '';
+                    routeSummary = `${startSt.name} ${startTime} ➔ ${endSt.name} ${endTime}`;
+                }
+
                 html += `
                     <div class="suji-card" onclick="openSujiModal('${suji.id}')">
                         <div class="suji-card-header">
-                            <span class="suji-train-num" style="text-align: left; font-weight: bold; color: #d0021b;">列番:${suji.trainNumber}</span>
-                            <span class="suji-syotei" style="text-align: right; color: #333;">${suji.syotei}</span>
+                            <span style="font-weight: bold; color: #d0021b;">列番: ${suji.trainNumber}</span>
+                            <span style="font-size: 13px; color: #333;">${suji.syotei}</span>
+                        </div>
+                        <div style="font-size: 14px; color: #444; margin-top: 6px; font-weight: bold;">
+                            ${routeSummary}
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                            <span style="font-size: 11px; color: #666;">投稿者: ${suji.authorName || '名無し'}</span>
                         </div>
                     </div>
                 `;
@@ -1585,13 +1618,16 @@
 
                     html += `
                         <div class="suji-timeline-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
-                            <div style="display:flex; justify-content:space-width; width:100%; justify-content:space-between;">
+                            <div style="display:flex; width:100%; justify-content:space-between;">
                                 <strong>${p.station} (${p.directionType || '方面'}: ${p.direction})</strong>
                                 <span style="font-size:12px; color:#d0021b; font-weight:bold;">${p.isHoliday ? '休日' : '平日'}</span>
                             </div>
                             <div>編成: <strong>${p.formation}</strong> ${timeStr ? `/ ${timeStr}` : ''}</div>
                             ${p.remarks ? `<div style="font-size:12px; color:#666;">備考: ${p.remarks}</div>` : ''}
-                            <div style="font-size:10px; color:#888; align-self:flex-end;">投稿者: ${p.authorName || '名無し'} (${dateStr})</div>
+                            <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px;">
+                                <span style="font-size:11px; color:#666;">投稿者: ${p.authorName || '名無し'}</span>
+                                <span style="font-size:10px; color:#888;">${dateStr}</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -1621,6 +1657,7 @@
                     </div>
                 `;
             });
+            html += `<div style="display:flex; justify-content:flex-end; margin-top:10px;"><span style="font-size:11px; color:#666;">投稿者: ${suji.authorName || '名無し'}</span></div>`;
             document.getElementById('sujiModalBody').innerHTML = html;
             modal.style.display = 'flex';
         }
@@ -1631,6 +1668,33 @@
         function closeModal() {
             document.getElementById('historyModal').style.display = 'none';
         }
+
+        // グローバルに関数を登録（エラー防止用）
+        window.filterHistory = filterHistory;
+        window.setDateFilter = setDateFilter;
+        window.filterSuji = filterSuji;
+        window.setSujiDayFilter = setSujiDayFilter;
+        window.openModal = openModal;
+        window.openSujiModal = openSujiModal;
+        window.closeModal = closeModal;
+        window.closeSujiModal = closeSujiModal;
+        window.switchView = switchView;
+        window.switchSubTab = switchSubTab;
+        window.selectPostSchedule = selectPostSchedule;
+        window.selectSujiPostSchedule = selectSujiPostSchedule;
+        window.selectDirectionType = selectDirectionType;
+        window.toggleSingleUnknown = toggleSingleUnknown;
+        window.toggleCoupling = window.toggleCoupling;
+        window.addCouplingField = addCouplingField;
+        window.removeCouplingField = removeCouplingField;
+        window.addSujiMiddleStationField = addSujiMiddleStationField;
+        window.toggleMiddleTimeFields = toggleMiddleTimeFields;
+        window.onlyNumbers = onlyNumbers;
+        window.finalizeTimeFormat = finalizeTimeFormat;
+        window.handleSujiPost = handleSujiPost;
+        window.handlePost = handlePost;
+        window.saveLocalUserName = saveLocalUserName;
     </script>
 </body>
 </html>
+```[cite: 1]
